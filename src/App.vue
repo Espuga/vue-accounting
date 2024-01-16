@@ -280,7 +280,7 @@ const submitDialog = () => {
     let date = new Date(foundsDate.value)
     let formatDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
     let object = {title: foundsTitle.value, description: foundsDescription.value, amount: foundsAmount.value, date: formatDate,
-                  groupId: group.value.id};
+                  groupId: group.value.id, token: window.$cookies.get('auth')};
     if(dialogSelected.value!='Add Funds'){
       object.amount = object.amount*-1
     }

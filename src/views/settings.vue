@@ -67,7 +67,7 @@ const usersList = [
 
 onMounted(() => {
   document.title = "Accounting - Settings"
-  /* axios.get(import.meta.env.VUE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
+  /* axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
     .then((res) => {
       groups.value = res.data.groups
     })
@@ -88,18 +88,18 @@ const createGroup = () => {
   }
 
   let groupData = { token: window.$cookies.get("auth"), name: groupName.value }
-  /* axios.post(import.meta.env.VUE_APP_BACKEND_IP + '/accounting/createGroup', groupData )
+  axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/createGroup', groupData )
     .then((res) => {
       if(res.data){
         toast.add({ severity: 'success', summary: 'Created Correclty', detail: 'Group Created Correctly', life: 4000 });
       }else{
         toast.add({ severity: 'error', summary: 'Error', detail: 'Error creating the group', life: 4000 });
       }
-    }) */
+    })
 }
 
 const changeMembers = () => {
-  axios.get(import.meta.env.VUE_APP_BACKEND_IP + '/accounting/changeMembers', { params: { token: window.$cookies.get("auth"), groupId: group.value.id, users: users.value } })
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/changeMembers', { params: { token: window.$cookies.get("auth"), groupId: group.value.id, users: users.value } })
     .then((res) => {
       if(res.data){
         toast.add({ severity: 'success', summary: 'Added Users', detail: 'Correclty added users', life: 4000 });

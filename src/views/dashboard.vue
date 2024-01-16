@@ -138,7 +138,7 @@ watch(dataChart, updateChart)
             <Column field="title" header="Title"></Column>
             <Column field="description" header="Description"></Column>
             <Column field="amount" header="Amount" sortable></Column>
-            <Column field="user" header="User"></Column>
+            <Column field="username" header="User"></Column>
             <Column field="data" header="Data" sortable></Column>
           </DataTable>
         </Panel>
