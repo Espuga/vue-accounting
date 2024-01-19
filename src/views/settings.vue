@@ -1,56 +1,55 @@
 <script setup>
+// =============================
+//          Import
 import axios from "axios";
 import { ref, onMounted, inject, watch } from "vue";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 
+// =============================
+//          Const
+
+// GLOBAL
 const toast = useToast();
 const confirm = useConfirm();
+const charging = ref(false)
 
-// User
+// USER 
 const user = inject('user')
-
 const groups = ref(inject('groups'));
 const group = ref(null)
 const selectedGroup = inject('selectedGroup')
-
-const changeSelectedGroup = () => {
-  group.value = selectedGroup.data.value
-}
 watch(() => selectedGroup.data.value, changeSelectedGroup);
+const admin = inject('isAdmin')
+const isAdmin = ref(false)
+watch(() => admin.data.value, changeAdmin);
 
-// Create Group dialog
+// NEW GROUP DIALOG
 const visible = ref(false)
 const groupName = ref("")
 const startAmount = ref(null)
 
-// members dialog
+// CHANGE MEMBERS DIALOG
 const changeVisible = ref(false)
 const users = ref("")
 const usersList = ref([])
 
-// charging
-const charging = ref(false)
 
-const admin = inject('isAdmin')
-const isAdmin = ref(false)
+// =============================
+//          Functions
 
-const functionProva = () => {
-  // console.log(admin.data.value)
+
+// CHANGE ADMIN VALUE
+const changeAdmin = () => {
   isAdmin.value = admin.data.value
 }
-// watch(admin, functionProva)
-watch(() => admin.data.value, functionProva);
 
-onMounted(() => {
-  document.title = "Accounting - Settings"
-  /* axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
-    .then((res) => {
-      groups.value = res.data.groups
-    })
-  group.value = selectedGroup.data.value */
-})
+// CHANGE SELECTED GROUP
+const changeSelectedGroup = () => {
+  group.value = selectedGroup.data.value
+}
 
+// CHANGE App.vue GROUP VALUE 
 const changeGroup = async () => {
   selectedGroup.updateGroup(group.value)
   selectedGroup.updateChart(group.value.id)
@@ -58,6 +57,7 @@ const changeGroup = async () => {
   // console.log(admin.data.value)
 }
 
+// CREATE NEW GROUP
 const createGroup = () => {
   let newGroupData = { 
     token: window.$cookies.get("auth"), 
@@ -78,6 +78,7 @@ const createGroup = () => {
     })
 }
 
+// CHANGE MEMBERS
 const changeMembers = () => {
   axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/changeMembers', { params: { token: window.$cookies.get("auth"), groupId: group.value.id, users: users.value } })
     .then((res) => {
@@ -91,8 +92,7 @@ const changeMembers = () => {
     })
 }
 
-
-
+// CONFIRM QUIT USERS
 const confirmQuitUser = (id) => {
   confirm.require({
     message: 'Are you sure you want to proceed?',
@@ -117,6 +117,7 @@ const confirmQuitUser = (id) => {
   });
 }
 
+// OPEN CHANGE MEMBERS DIALOG
 const openChangeMembers = () => {
   if(group.value == null){
     toast.add({ severity: 'warn', summary: 'No group selected', detail: 'Please, select a group to manage it.', life: 3000 });
@@ -137,6 +138,7 @@ const openChangeMembers = () => {
   }
 }
 
+// DLETE GROUP CONFIRMATION
 const openDeleteGroup = () => {
   if(group.value == null){
     toast.add({ severity: 'warn', summary: 'No group selected', detail: 'Please, select a group to manage it.', life: 3000 });
@@ -164,6 +166,11 @@ const openDeleteGroup = () => {
     });
   }
 }
+
+// ON MOUNTED
+onMounted(() => {
+  document.title = "Accounting - Settings"
+})
 
 </script>
 
@@ -309,23 +316,17 @@ const openDeleteGroup = () => {
               </div>
               <Button @click="openDeleteGroup()" label="Delete" />
 
-              
-
             </div> <!-- FI DELETE GROUP -->
-            
-
           </div>
-
-
-
-
-
         </div>
       </template>
     </Card>
 
+    <!-- TOAST -->
     <Toast/>
+    <!-- CONFIRM DIALOG -->
     <ConfirmDialog></ConfirmDialog>
+    <!-- LOADING PROGRESS SPINNER -->
     <Dialog v-model:visible="charging" header="Loading..." modal :closable="false">
       <ProgressSpinner />
     </Dialog>

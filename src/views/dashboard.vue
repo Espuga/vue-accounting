@@ -1,4 +1,6 @@
 <script setup>
+// =============================
+//          Import
 import { ref, onMounted, inject, watch  } from 'vue';
 import { use } from "echarts/core";
 import * as echarts from 'echarts';
@@ -22,19 +24,29 @@ use([
   GridComponent
 ]);
 
+// =============================
+//          Const
+
+// GLOBAL
+const group = inject('selectedGroup')
+
+// MAIN CHART
 const chartData = ref();
-
-const transactionData = inject('dataTable')
-const transactionDataExport = ref()
-
 const labelsChart = inject('labelsChart')
 const dataChart = inject('dataChart')
 const addedData = inject('addedData')
 const withdrawedData = inject('withdrawedData')
-const dataChart1 = inject('dataChart1')
+const globalData = inject('dataChart1')
 
-const group = inject('selectedGroup')
+// DATA TABLE
+const transactionData = inject('dataTable')
+const transactionDataExport = ref()
 
+
+// =============================
+//          Functions
+
+// GET CHART DATA
 const updateChart = () => {
   chartData.value = {
     tooltip: { trigger: 'axis' },
@@ -66,28 +78,29 @@ const updateChart = () => {
             { offset: 1, color: '#188df0' }
           ])
         },
-        data: dataChart1.value,
+        data: globalData.value,
       }
     ]
   };
 }
 
+// EXPORT TABLE
 const exportTable = () => {
   transactionDataExport.value.exportCSV();
 }
 
-
-onMounted(() => {
-  document.title = "Accounting - Dashboard"
-  updateChart()
-})
-
+// GET NAME TO DOWNLOAD
 const getFileName = (chart) => {
   var now = new Date()
   var date = now.getDate()+"-"+now.getMonth()+"-"+now.getFullYear()
   return group.data.value.name + '_accounting_' + (chart ? 'chart_' : '') + date
 }
 
+// ON MOUNTED
+onMounted(() => {
+  document.title = "Accounting - Dashboard"
+  updateChart()
+})
 
 watch(dataChart, updateChart)
 </script>
@@ -96,6 +109,7 @@ watch(dataChart, updateChart)
 <template>
   <div class="flex flex-column" >
     <div class="grid">
+
       <!-- ACCOUNTING CHART -->
       <div class="col-12">
         <Panel header="Header" ref="cardGridFi" :collapsed="false" :pt="{
@@ -114,6 +128,7 @@ watch(dataChart, updateChart)
           </div>
         </Panel>
       </div>
+
       <!-- ACCOUNTING TABLE -->
       <div class="col-12">
         <Panel header="Header" ref="cardGridFi" :collapsed="false" :pt="{
@@ -143,7 +158,7 @@ watch(dataChart, updateChart)
           </DataTable>
         </Panel>
       </div>
+
     </div>
   </div>
-  
 </template>

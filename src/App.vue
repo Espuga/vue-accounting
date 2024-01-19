@@ -1,4 +1,6 @@
 <script setup>
+// =============================
+//          Import
 import { ref, onMounted, provide } from "vue";
 import { useToast } from "primevue/usetoast";
 import axios from 'axios';
@@ -7,15 +9,13 @@ import { useRouter } from 'vue-router';
 import IndexedDBService from './services/IndexedDBService'
 
 
-// Loggin
-const logged = ref(false)
-const user = ref("")
-provide('user', user); 
+// =============================
+//          Const
 
+// General cosnt
 const router = useRouter()
-
 const toast = useToast();
-const items = ref([
+const menuItems = ref([
   {
     label: 'Home',
     icon: 'pi pi-home',
@@ -34,7 +34,7 @@ const items = ref([
         label: 'New Transaction',
         icon: 'pi pi-credit-card',
         command: () => {
-          dialogVisible.value = true
+          transactionDialog.value = true
         }
       },
       {
@@ -51,45 +51,11 @@ const items = ref([
   },
 ]);
 
-// provide
-const dataTable = ref([])
-provide('dataTable', dataTable); 
-const labelsChart = ref([])
-provide('labelsChart', labelsChart); 
-const dataChart = ref([])
-provide('dataChart', dataChart); 
-const addedData = ref([])
-provide('addedData', addedData); 
-const withdrawedData = ref([])
-provide('withdrawedData', withdrawedData); 
-const dataChart1 = ref([])
-provide('dataChart1', dataChart1); 
-
-// Money
-const money = ref(6000)
-provide('money', money)
-
-// Dialog
-const dialogVisible = ref(false);
-const dialogSelected = ref('Add Funds');
-const dialogOptions = ref(['Add Funds', 'Withdraw Funds']);
-// Add
-const foundsAmount = ref()
-const foundsTitle = ref("")
-const foundsDescription = ref("")
-const foundsChecked = ref(false)
-const currentDate = new Date()
-const formatDate = ref(currentDate.getFullYear()+"-"+(parseInt(currentDate.getMonth())+1)+"-"+currentDate.getDate())
-const foundsDate = ref(formatDate)
-const titleInvalid = ref(false)
-const amountInvalid = ref(false)
-const descriptionInvalid = ref(false)
-
-// Charging
-const charging = ref(false)
-
-// Login
-const visible = ref(false);
+// Loggin
+const logged = ref(false)
+const user = ref("")
+provide('user', user); 
+const loginDialog = ref(false);
 const username = ref("")
 const password = ref("")
 const group = ref({name: "", id: 0})
@@ -104,33 +70,68 @@ provide('selectedGroup', {
 }); 
 const groups = ref([])
 provide('groups', groups);
-// admin
 const admin = ref(false)
-// provide('admin', admin)
 provide('isAdmin', {
   data: admin,
   updateAdmin(groupId) {
-    getDrets(groupId)
+    getRights(groupId)
   },
 }); 
 
-/* posar funcio 
-const getDrets = async (groupId) => {
-  let rights = await IndexedDBService.obtenerDatos(groupId)
-  if(rights.rights.includes(1, 0)) {
-    admin.value = true
-  }
-}
-dins de */
+// Accounting Dashboard
+const dataTable = ref([])
+provide('dataTable', dataTable); 
+const labelsChart = ref([])
+provide('labelsChart', labelsChart); 
+const dataChart = ref([])
+provide('dataChart', dataChart); 
+const addedData = ref([])
+provide('addedData', addedData); 
+const withdrawedData = ref([])
+provide('withdrawedData', withdrawedData); 
+const dataChart1 = ref([])
+provide('dataChart1', dataChart1); 
 
-const closeDialog = () => {
-  dialogVisible.value = false;
+// Accounting Money
+const money = ref(6000)
+provide('money', money)
+
+// Dialog
+const transactionDialog = ref(false);
+const dialogSelected = ref('Add Funds');
+const dialogOptions = ref(['Add Funds', 'Withdraw Funds']);
+
+// Transaction
+const foundsAmount = ref()
+const foundsTitle = ref("")
+const foundsDescription = ref("")
+const foundsChecked = ref(false)
+const currentDate = new Date()
+const formatDate = ref(currentDate.getFullYear()+"-"+(parseInt(currentDate.getMonth())+1)+"-"+currentDate.getDate())
+const foundsDate = ref(formatDate)
+const titleInvalid = ref(false)
+const amountInvalid = ref(false)
+const descriptionInvalid = ref(false)
+
+// loading
+const loading = ref(false)
+
+
+
+
+
+
+// =============================
+//          Functions
+
+// CLOSE TRANSACTION DATA DIALOG
+const closeTransactionDialog = () => {
+  transactionDialog.value = false;
   const currentRoute = router.currentRoute.value;
   router.push({ path: currentRoute.path });  
 }
 
-
-
+// GET CHART DATA
 const getChart = (gr) => {
   try {
     if(gr == 0){
@@ -279,21 +280,15 @@ const getChart = (gr) => {
           dataChart1.value = res.data.dataChart.totalData
         }
       })
-    /* axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getTotal', { params: { groupId: gr } })
-      .then((res) => {
-        if(res.data.ok){
-          // Total Chart
-          dataChart1.value = res.data.totalData
-        }
-      }) */
   }catch {
     toast.add({ severity: 'warn', summary: 'No Groups', detail: 'You are not in any group', life: 4000 });
   }
 }
 
-const submitDialog = () => {
+// SUBMIT TRANSACTION DATA
+const submitTransaction = () => {
   if(foundsAmount.value == 0 || foundsAmount.value == null || foundsTitle.value == "" || foundsDescription.value == ""){
-    // If some field is empty
+    // If some field is empty, WARNING!
     toast.add({ severity: 'warn', summary: 'Warning', detail: 'Fill all gaps', life: 4000 });
     amountInvalid.value = foundsAmount.value == 0 || foundsAmount.value == null || foundsAmount.value == undefined ? true : false;
     titleInvalid.value = foundsTitle.value == "" ? true : false;
@@ -316,7 +311,7 @@ const submitDialog = () => {
           // Success toast
           toast.add({ severity: 'success', summary: 'Transaction Correctly', detail: 'The transaction was saved correctly', life: 4000 });
           // Close Dialog
-          dialogVisible.value = false;
+          transactionDialog.value = false;
           //location.reload();
           getChart(0)
         }else{
@@ -326,13 +321,15 @@ const submitDialog = () => {
   }
 }
 
+// RESET TRANSACTION DATE (CURRENT DATE)
 const changeChecked = () => {
   if(foundsChecked.value == false){
     formatDate.value = currentDate.getFullYear()+"-"+(parseInt(currentDate.getMonth())+1)+"-"+currentDate.getDate()
   }
 }
 
-const getDrets = async (groupId) => {
+// GET USER RIGHTS
+const getRights = async (groupId) => {
   let rights = await IndexedDBService.obtenerDatos(groupId)
   if(rights != undefined){
     if(rights.rights.includes(1, 0)) {
@@ -345,40 +342,12 @@ const getDrets = async (groupId) => {
   } 
 }
 
-onMounted(() => {
-  document.title = "Accounting"
-  // INICI PROVES
-  /* logged.value = true
-  user.value = "marc"
-  groups.value = [{id: 1, name: "nokia"}, {id: 2, name: "servistek"}]
-  group.value = {id: 1, name: "nokia"} 
-  getChart(0)*/
-  // FI PROVES
-  if(window.$cookies.isKey("auth")) {
-    charging.value = true
-    logged.value = true
-    axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/getUsername', { params: { token: window.$cookies.get("auth") } })
-      .then((res) => {
-        charging.value = false
-        user.value = res.data
-      })
-    axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
-      .then((res) => {
-        groups.value = res.data.groups
-        group.value = res.data.groups[0]
-        getDrets(group.value.id)
-        getChart(0)
-      })
-  }else{
-    visible.value = true
-  }
-})
-
+// SEND LOGIN FUNCTION
 const login = () => {
-  charging.value = true
+  loading.value = true
   axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/login', { params : { username: username.value, password: password.value }})
     .then((res) => {
-      charging.value = false
+      loading.value = false
       if(res.data.ok){
         if(res.data.token != ""){
           window.$cookies.set('auth', res.data.token)
@@ -402,18 +371,47 @@ const login = () => {
         }
       }
     })
-  
-
-  visible.value = false
+  loginDialog.value = false
 }
+
+// ON MOUNTED
+onMounted(() => {
+  document.title = "Accounting"
+  // INICI PROVES
+  /* logged.value = true
+  user.value = "marc"
+  groups.value = [{id: 1, name: "nokia"}, {id: 2, name: "servistek"}]
+  group.value = {id: 1, name: "nokia"} 
+  getChart(0)*/
+  // FI PROVES
+  if(window.$cookies.isKey("auth")) {
+    loading.value = true
+    logged.value = true
+    axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/getUsername', { params: { token: window.$cookies.get("auth") } })
+      .then((res) => {
+        loading.value = false
+        user.value = res.data
+      })
+    axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
+      .then((res) => {
+        groups.value = res.data.groups
+        group.value = res.data.groups[0]
+        getRights(group.value.id)
+        getChart(0)
+      })
+  }else{
+    loginDialog.value = true
+  }
+})
 
 </script>
 
 <template>
   <div id="app">
+
+    <!-- MENU -->
     <div class="card">
-      <!-- Menu -->
-      <Menubar :model="items" class="shadow-7">
+      <Menubar :model="menuItems" class="shadow-7">
         <template #item="{ item, props, hasSubmenu }">
           <router-link v-if="item.route" v-slot="{ href, navigate }" :to="item.route" custom>
             <a :href="href" v-bind="props.action" @click="navigate">
@@ -428,7 +426,7 @@ const login = () => {
           </a>
         </template>
         <template #end>
-          <Button v-if="logged == false" icon="pi pi-user" label="Login" @click="visible = true" />
+          <Button v-if="logged == false" icon="pi pi-user" label="Login" @click="loginDialog = true" />
           <div v-else class="grid align-items-center mr-4">
             <i class="pi pi-user mr-2" style="font-size: 1.2rem"></i>
             <p><b>{{ user }}</b></p>
@@ -436,10 +434,10 @@ const login = () => {
         </template>
       </Menubar>
     </div>
-
+    <!-- LOGIN DIALOG -->
     <div class="card flex justify-content-center">
       <Dialog
-          v-model:visible="visible"
+          v-model:visible="loginDialog"
           modal
           :pt="{
               mask: {
@@ -465,18 +463,18 @@ const login = () => {
         </template>
       </Dialog>
     </div>
-
-    <RouterView v-if="logged" class="m-4"></RouterView>
     
     <!-- DIALOG TRANSACTION -->
-    <Dialog v-model:visible="dialogVisible" modal :closable="false" :style="{ width: '50rem' }" 
+    <Dialog v-model:visible="transactionDialog" modal :closable="false" :style="{ width: '50rem' }" 
       :breakpoints="{ '1199px': '75vw', '575px': '90vw' } ">
+      <!-- HEADER -->
       <template #header>
         <div class="flex align-items-center">
           <i class="pi pi-chart-line" style="font-size: 1.5rem"></i>
           <b class="text-2xl ml-2">Transaction</b>
         </div>
       </template>
+      <!-- MAIN CONTENT -->
       <div class="card flex justify-content-center mt-1">
         <SelectButton v-model="dialogSelected" :options="dialogOptions" aria-labelledby="basic" />
       </div>
@@ -511,21 +509,27 @@ const login = () => {
           <Calendar v-model="foundsDate" dateFormat="yy-mm-dd" />
         </div >
       </div>
-
+      <!-- FOOTER -->
       <template #footer>
         <div class="flex justify-content-center">
-          <Button label="Cancel" icon="pi pi-times" @click="closeDialog" class="surface-300 border-400 text-black-alpha-90"/>
-          <Button label="Submit" icon="pi pi-upload" @click="submitDialog" :class="[dialogSelected=='Add Funds' ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600']"/>
+          <Button label="Cancel" icon="pi pi-times" @click="closeTransactionDialog" class="surface-300 border-400 text-black-alpha-90"/>
+          <Button label="Submit" icon="pi pi-upload" @click="submitTransaction" :class="[dialogSelected=='Add Funds' ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600']"/>
         </div>
       </template>
     </Dialog>
+
+    <!-- ROUTER VIEW -->
+    <RouterView v-if="logged" class="m-4"></RouterView>
+
+    <!-- TOAST -->
     <Toast />
-    <Dialog v-model:visible="charging" header="Loading..." modal :closable="false">
+
+    <!-- LOADING PROGRESS SPINNER -->
+    <Dialog v-model:visible="loading" header="Loading..." modal :closable="false">
       <ProgressSpinner />
     </Dialog>
-  </div>
 
-  
+  </div><!-- END APP -->
 </template>
 
 
