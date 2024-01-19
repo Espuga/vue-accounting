@@ -15,6 +15,7 @@
   import axios from 'axios';
   import { format } from 'date-fns';
 
+  const charging = ref(false)
 
   use([
     CanvasRenderer,
@@ -59,8 +60,10 @@
     const start = format(startDate.value, 'yyyy-MM-dd');
     const end = format(endDate.value, 'yyyy-MM-dd');
     if(priceCpu.value != "" && priceMaxdisk.value != ""){
-      axios.get(import.meta.env.VUE_APP_BACKEND_IP + '/proxmox/getInit', {params: {start: start, end: end, priceCpu: priceCpu.value, priceDisk: priceMaxdisk.value}})
+      charging.value = true
+      axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/proxmox/getInit', {params: {start: start, end: end, priceCpu: priceCpu.value, priceDisk: priceMaxdisk.value}})
         .then(res => {
+          charging.value = false
           if(res.data.ok){
             priceCpu22.value = 0
             priceCpu23.value = 0
@@ -422,7 +425,9 @@
       </div>
     </div> -->
 
-
+    <Dialog v-model:visible="charging" header="Loading..." modal :closable="false">
+      <ProgressSpinner />
+    </Dialog>
   </div>
   
 </template>

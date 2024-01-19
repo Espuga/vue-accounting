@@ -39,9 +39,12 @@ import Panel from 'primevue/panel';
 import DataView from 'primevue/dataview';
 import DataViewLayoutOptions from 'primevue/dataviewlayoutoptions'
 import ConfirmDialog from 'primevue/confirmdialog';
+import ProgressSpinner from 'primevue/progressspinner';
+
 
 import "primevue/resources/themes/lara-light-blue/theme.css";
 import "primevue/resources/primevue.min.css";
+
 
 const app = createApp(App)
 
@@ -65,6 +68,7 @@ app.component('Panel', Panel);
 app.component('DataView', DataView);
 app.component('DataViewLayoutOptions', DataViewLayoutOptions);
 app.component('ConfirmDialog', ConfirmDialog);
+app.component('ProgressSpinner', ProgressSpinner);
 
 
 app.use(PrimeVue)

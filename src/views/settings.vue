@@ -11,8 +11,13 @@ const confirm = useConfirm();
 const user = inject('user')
 
 const groups = ref(inject('groups'));
-const group = ref()
+const group = ref(null)
 const selectedGroup = inject('selectedGroup')
+
+const changeSelectedGroup = () => {
+  group.value = selectedGroup.data.value
+}
+watch(() => selectedGroup.data.value, changeSelectedGroup);
 
 // Create Group dialog
 const visible = ref(false)
@@ -22,48 +27,20 @@ const startAmount = ref(null)
 // members dialog
 const changeVisible = ref(false)
 const users = ref("")
-const usersList = [
-  {
-      id: '1',
-      name: 'marc',
-      username: "Marc"
-  },
-  {
-      id: '2',
-      name: 'espuga',
-      username: "Espuga"
-  },
-  {
-      id: '3',
-      name: 'espuga',
-      username: "Espuga"
-  },
-  {
-      id: '2',
-      name: 'espuga',
-      username: "Espuga"
-  },
-  {
-      id: '2',
-      name: 'espuga',
-      username: "Espuga"
-  },
-  {
-      id: '2',
-      name: 'espuga',
-      username: "Espuga"
-  },
-  {
-      id: '2',
-      name: 'espuga',
-      username: "Espuga"
-  },
-  {
-      id: '2',
-      name: 'espuga',
-      username: "Espuga"
-  },
-]
+const usersList = ref([])
+
+// charging
+const charging = ref(false)
+
+const admin = inject('isAdmin')
+const isAdmin = ref(false)
+
+const functionProva = () => {
+  // console.log(admin.data.value)
+  isAdmin.value = admin.data.value
+}
+// watch(admin, functionProva)
+watch(() => admin.data.value, functionProva);
 
 onMounted(() => {
   document.title = "Accounting - Settings"
@@ -74,27 +51,30 @@ onMounted(() => {
   group.value = selectedGroup.data.value */
 })
 
-const changeGroup = () => {
+const changeGroup = async () => {
   selectedGroup.updateGroup(group.value)
   selectedGroup.updateChart(group.value.id)
+  await admin.updateAdmin(group.value.id)
+  // console.log(admin.data.value)
 }
 
 const createGroup = () => {
   let newGroupData = { 
     token: window.$cookies.get("auth"), 
     name: groupName.value, 
-    startAmount: startAmount.value,  
+    amount: startAmount.value,  
     users: users.value
   }
-
-  let groupData = { token: window.$cookies.get("auth"), name: groupName.value }
-  axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/createGroup', groupData )
+  charging.value = true;
+  axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/createGroup', newGroupData )
     .then((res) => {
       if(res.data){
+        // Refrescar groups
         toast.add({ severity: 'success', summary: 'Created Correclty', detail: 'Group Created Correctly', life: 4000 });
       }else{
         toast.add({ severity: 'error', summary: 'Error', detail: 'Error creating the group', life: 4000 });
       }
+      charging.value = false;
     })
 }
 
@@ -102,6 +82,8 @@ const changeMembers = () => {
   axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/changeMembers', { params: { token: window.$cookies.get("auth"), groupId: group.value.id, users: users.value } })
     .then((res) => {
       if(res.data){
+        users.value = ""
+        openChangeMembers()
         toast.add({ severity: 'success', summary: 'Added Users', detail: 'Correclty added users', life: 4000 });
       }else{
         toast.add({ severity: 'error', summary: 'Error', detail: 'Error adding users', life: 4000 });
@@ -109,9 +91,7 @@ const changeMembers = () => {
     })
 }
 
-const quitUser = (id) => {
-  return false
-}
+
 
 const confirmQuitUser = (id) => {
   confirm.require({
@@ -119,16 +99,70 @@ const confirmQuitUser = (id) => {
     header: 'Confirmation',
     icon: 'pi pi-exclamation-triangle',
     accept: () => {
-      if(quitUser(id)){
-        toast.add({ severity: 'info', summary: 'Confirmed', detail: 'User has been quited', life: 3000 });
-      }else{
-        toast.add({ severity: 'error', summary: 'Error', detail: 'An error occurred while quitting the user. Try it again.', life: 3000 });
-      }
+      charging.value = true;
+      axios.delete(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/quitUser', {params: {groupId: group.value.id, userId: id}})
+        .then((res) => {
+          if(res.data){
+            openChangeMembers()
+            toast.add({ severity: 'success', summary: 'Confirmed', detail: 'User has been quited', life: 3000 });
+          }else {
+            toast.add({ severity: 'error', summary: 'Error', detail: 'An error occurred while quitting the user. Try it again.', life: 3000 });
+          }
+          charging.value = false;
+        })
     },
     reject: () => {
       toast.add({ severity: 'warn', summary: 'Cancelled', detail: 'User hasn\'t been quited', life: 3000 });
     }
   });
+}
+
+const openChangeMembers = () => {
+  if(group.value == null){
+    toast.add({ severity: 'warn', summary: 'No group selected', detail: 'Please, select a group to manage it.', life: 3000 });
+  }else{ 
+    changeVisible.value = true
+    charging.value = true;
+    axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getUsers', { params: { groupId: group.value.id } } )
+      .then((res) => {
+        if(res.data.ok){
+          // posar els users amb una v-for o posar els usuaris en una llista, depen del component (slotProps.item)
+          // console.log(res.data.users)
+          usersList.value = res.data.users
+        }else{
+          toast.add({ severity: 'error', summary: 'Error', detail: 'An error occurred while getting users. Try it again.', life: 3000 });
+        }
+        charging.value = false;
+      })
+  }
+}
+
+const openDeleteGroup = () => {
+  if(group.value == null){
+    toast.add({ severity: 'warn', summary: 'No group selected', detail: 'Please, select a group to manage it.', life: 3000 });
+  }else {
+    confirm.require({
+      message: 'Are you sure you want to proceed?',
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+      charging.value = true;
+        axios.delete(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/deleteGroup', {params: {groupId: group.value.id}})
+          .then((res) => {
+            if(res.data){
+              // Refrescar groups
+              toast.add({ severity: 'success', summary: 'Confirmed', detail: 'Group has been deleted', life: 3000 });
+            }else {
+              toast.add({ severity: 'error', summary: 'Error', detail: 'An error occurred while deleting the group. Try it again.', life: 3000 });
+            }
+            charging.value = false;
+          })
+      },
+      reject: () => {
+        toast.add({ severity: 'warn', summary: 'Cancelled', detail: 'Group hasn\'t been deleted.', life: 3000 });
+      }
+    });
+  }
 }
 
 </script>
@@ -213,7 +247,7 @@ const confirmQuitUser = (id) => {
                 <i class="pi pi-users" style="font-size: 2rem"></i>
                 <span class="ml-2">Change members</span>
               </div>
-              <Button @click="changeVisible=true" label="Change" />
+              <Button @click="openChangeMembers()" label="Change" />
 
               <Dialog v-model:visible="changeVisible" modal :closable="false" :style="{ width: '35rem', maxHeight: '70vh' }" 
               :breakpoints="{ '1199px': '75vw', '575px': '90vw' } ">
@@ -237,7 +271,7 @@ const confirmQuitUser = (id) => {
                           <div class="flex flex-column sm:flex-row justify-content-between align-items-center flex-1 gap-4">
                             <div class="">{{ item.username }}</div>
                             <div class="flex sm:flex-column align-items-center sm:align-items-end gap-3 sm:gap-2">
-                              <Button icon="pi pi-times p-0" @click="confirmQuitUser(item.id)" rounded :disabled="item.name===user"></Button>
+                              <Button v-if="isAdmin" icon="pi pi-times p-0" @click="confirmQuitUser(item.id)" rounded :disabled="item.name===user"></Button>
                             </div>
                           </div>
                         </div>
@@ -245,14 +279,11 @@ const confirmQuitUser = (id) => {
                     </div>
                   </template>
                 </DataView>
-
-
-                
               </div>
               <!-- FOOTER DIALOG NEW GROUP -->
               <template #footer>
                 <!-- ADD MEMBER -->
-                <div class="card flex align-items-center mt-2">
+                <div v-if="isAdmin" class="card flex align-items-center mt-2">
                   <span class="col-9 p-float-label">
                     <InputText v-model="users" class="w-full" placeholder="marc, lluc..." />
                     <label class="pl-2" for="users">Username</label>
@@ -266,13 +297,37 @@ const confirmQuitUser = (id) => {
             </Dialog>
 
             </div> <!-- fi change members -->
+          </div>
+
+
+          <div v-if="isAdmin" class="ml-6 mt-4">
+            <!-- DELETE GROUP -->
+            <div class="flex justify-content-between align-items-center">
+              <div class="flex align-items-center">
+                <i class="pi pi-trash" style="font-size: 2rem"></i>
+                <span class="ml-2">Delete Group</span>
+              </div>
+              <Button @click="openDeleteGroup()" label="Delete" />
+
+              
+
+            </div> <!-- FI DELETE GROUP -->
+            
 
           </div>
+
+
+
+
+
         </div>
       </template>
     </Card>
 
     <Toast/>
     <ConfirmDialog></ConfirmDialog>
+    <Dialog v-model:visible="charging" header="Loading..." modal :closable="false">
+      <ProgressSpinner />
+    </Dialog>
   </div>
 </template>

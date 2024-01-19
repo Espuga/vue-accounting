@@ -4,6 +4,7 @@ import { useToast } from "primevue/usetoast";
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 
+import IndexedDBService from './services/IndexedDBService'
 
 
 // Loggin
@@ -84,6 +85,9 @@ const titleInvalid = ref(false)
 const amountInvalid = ref(false)
 const descriptionInvalid = ref(false)
 
+// Charging
+const charging = ref(false)
+
 // Login
 const visible = ref(false);
 const username = ref("")
@@ -99,7 +103,25 @@ provide('selectedGroup', {
   }
 }); 
 const groups = ref([])
-provide('groups', groups)
+provide('groups', groups);
+// admin
+const admin = ref(false)
+// provide('admin', admin)
+provide('isAdmin', {
+  data: admin,
+  updateAdmin(groupId) {
+    getDrets(groupId)
+  },
+}); 
+
+/* posar funcio 
+const getDrets = async (groupId) => {
+  let rights = await IndexedDBService.obtenerDatos(groupId)
+  if(rights.rights.includes(1, 0)) {
+    admin.value = true
+  }
+}
+dins de */
 
 const closeDialog = () => {
   dialogVisible.value = false;
@@ -310,6 +332,19 @@ const changeChecked = () => {
   }
 }
 
+const getDrets = async (groupId) => {
+  let rights = await IndexedDBService.obtenerDatos(groupId)
+  if(rights != undefined){
+    if(rights.rights.includes(1, 0)) {
+      admin.value = true
+    } else {
+      admin.value = false
+    }
+  } else {
+    admin.value = false
+  } 
+}
+
 onMounted(() => {
   document.title = "Accounting"
   // INICI PROVES
@@ -320,15 +355,18 @@ onMounted(() => {
   getChart(0)*/
   // FI PROVES
   if(window.$cookies.isKey("auth")) {
+    charging.value = true
     logged.value = true
     axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/getUsername', { params: { token: window.$cookies.get("auth") } })
       .then((res) => {
+        charging.value = false
         user.value = res.data
       })
     axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
       .then((res) => {
         groups.value = res.data.groups
         group.value = res.data.groups[0]
+        getDrets(group.value.id)
         getChart(0)
       })
   }else{
@@ -337,21 +375,31 @@ onMounted(() => {
 })
 
 const login = () => {
+  charging.value = true
   axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/login', { params : { username: username.value, password: password.value }})
     .then((res) => {
-      if(res.data != ""){
-        window.$cookies.set('auth', res.data)
-        toast.add({ severity: 'success', summary: 'Correct credentials', detail: '', life: 4000 });
-        logged.value = true
-        user.value = username.value
-        // select default group
-        axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
-          .then((res) => {
-            group.value = res.data.groups[0]
-            getChart(0)
+      charging.value = false
+      if(res.data.ok){
+        if(res.data.token != ""){
+          window.$cookies.set('auth', res.data.token)
+          toast.add({ severity: 'success', summary: 'Correct credentials', detail: '', life: 4000 });
+          logged.value = true
+          user.value = username.value
+
+          // Get rights
+          res.data.rights.forEach((right) => {
+            IndexedDBService.agregarDato({"rights": [right.right_id], groupId: right.group_id})
           })
-      }else{
-        toast.add({ severity: 'error', summary: 'Incorrect credentials', detail: 'Username or password incorrect', life: 4000 });
+
+          // select default group
+          axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
+            .then((res) => {
+              group.value = res.data.groups[0]
+              getChart(0)
+            })
+        }else{
+          toast.add({ severity: 'error', summary: 'Incorrect credentials', detail: 'Username or password incorrect', life: 4000 });
+        }
       }
     })
   
@@ -472,8 +520,12 @@ const login = () => {
       </template>
     </Dialog>
     <Toast />
+    <Dialog v-model:visible="charging" header="Loading..." modal :closable="false">
+      <ProgressSpinner />
+    </Dialog>
   </div>
 
+  
 </template>
 
 
