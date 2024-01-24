@@ -11,7 +11,10 @@ export default {
     const db = await dbPromise;
     const tx = db.transaction('rights', 'readwrite');
     const store = tx.objectStore('rights');
-    await store.add(dato);
+    const exist = await store.get(dato.groupId);
+    if (!exist) {
+      await store.add(dato);
+    }
   },
   async obtenerDatos(groupId) {
     const db = await dbPromise;

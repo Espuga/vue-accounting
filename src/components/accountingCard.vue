@@ -2,6 +2,8 @@
 import { inject } from "vue";
 
 const money = inject('money')
+const group = inject('selectedGroup')
+
 
 </script>
 
@@ -9,7 +11,7 @@ const money = inject('money')
   <div :class="{'small-box': true, 'bg-green': money>0, 'bg-red': money<0 }">
     <div class="inner">
       <h3>{{ money }} €</h3>
-      <p>Accounting</p>
+      <p>Accounting {{ group.data.value.name }}</p>
     </div>
     <div class="icon">
       <i class="pi pi-chart-bar"></i>

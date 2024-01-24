@@ -40,6 +40,8 @@ import DataView from 'primevue/dataview';
 import DataViewLayoutOptions from 'primevue/dataviewlayoutoptions'
 import ConfirmDialog from 'primevue/confirmdialog';
 import ProgressSpinner from 'primevue/progressspinner';
+import Password from 'primevue/password';
+import Checkbox from 'primevue/checkbox';
 
 
 import "primevue/resources/themes/lara-light-blue/theme.css";
@@ -69,6 +71,8 @@ app.component('DataView', DataView);
 app.component('DataViewLayoutOptions', DataViewLayoutOptions);
 app.component('ConfirmDialog', ConfirmDialog);
 app.component('ProgressSpinner', ProgressSpinner);
+app.component('Password', Password);
+app.component('Checkbox', Checkbox);
 
 
 app.use(PrimeVue)
