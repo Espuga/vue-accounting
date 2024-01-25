@@ -263,8 +263,10 @@ const login = () => {
           })
 
           // select default group
+          loading.value = true
           axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
             .then((res) => {
+              loading.value = false
               groups.value = res.data.groups
               group.value = res.data.groups[0]
               getRights(group.value.id)
@@ -338,13 +340,6 @@ const getHome = () => {
 onMounted(() => {
   // deleteCookie('auth')
   document.title = "Accounting"
-  // INICI PROVES
-  /* logged.value = true
-  user.value = "marc"
-  groups.value = [{id: 1, name: "nokia"}, {id: 2, name: "servistek"}]
-  group.value = {id: 1, name: "nokia"} 
-  getChart(0)*/
-  // FI PROVES
   if(window.$cookies.isKey("auth")) {
     loading.value = true
     logged.value = true

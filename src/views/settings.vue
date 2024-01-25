@@ -52,6 +52,7 @@ const nameUserRights = ref()
 const teacher = ref(false)
 const rights = ref([])
 const selectedRights = ref([])
+const userIdRights = ref()
 
 // CHANGE SPRINT PERIODS
 const visibleSprintPeriods = ref(false)
@@ -205,7 +206,7 @@ const getRights = async () => {
     }
   } else {
     teacher.value = false
-  } 
+  }
 }
 
 const openChangeSprintPeriods = () => {
@@ -236,16 +237,29 @@ const saveSprintPeriods = () => {
 }
 
 const openChangeRights = (userId, name) => {
-  getAllRights()
+  getAllRights(userId)
   userRightsVisible.value = true
   nameUserRights.value = name
+  userIdRights.value = userId
 }
 
-const getAllRights = () => {
+const getAllRights = (userId) => {
   axios.get(import.meta.env.VITE_APP_BACKEND_IP + "/accounting/getRights") 
     .then((res) => {
       if(res.data.ok) {
         rights.value = res.data.rights;
+        selectedRights.value = []
+        usersList.value.forEach((user) => {
+          if(user.id == userId) {
+            rights.value.forEach((right) => {
+              if(user.rights.includes(parseInt(right.id))){
+                selectedRights.value.push(right.id)
+              }
+            })
+            // break
+            return;
+          }
+        })
       }else {
         toast.add({ severity: 'error', summary: 'Error!', detail: 'Error getting the rights.', life: 3000 });
       }
@@ -253,7 +267,15 @@ const getAllRights = () => {
 }
 
 const saveUserRights = () => {
-  
+  let object = {user_id: userIdRights.value, group_id: group.value.id, rights_id: selectedRights.value}
+  axios.post(import.meta.env.VITE_APP_BACKEND_IP + "/accounting/saveRights", object)
+    .then((res) => {
+      if(res.data){
+        toast.add({ severity: 'success', summary: 'Saved!', detail: 'The rights have been saved.', life: 3000 });
+      }else {
+        toast.add({ severity: 'error', summary: 'Error!', detail: 'Error saving the rights.', life: 3000 });
+      }
+    })
 }
 
 // ON MOUNTED
@@ -261,6 +283,7 @@ onMounted(() => {
   document.title = "Accounting - Settings"
   // console.log(selectedGroup.data.value)
   group.value = selectedGroup.data.value
+  isAdmin.value = admin.value
   getRights()
   
 })
@@ -398,7 +421,7 @@ onMounted(() => {
                                   <template #footer>
                                     <!-- ADD MEMBER -->
                                     <div class="flex justify-content-center">
-                                      <Button label="Cancel" icon="pi pi-times" @click="userRightsVisible = false" class="surface-300 border-400 text-black-alpha-90"/>
+                                      <Button label="Cancel" icon="pi pi-times" @click="userRightsVisible = false; rights = []" class="surface-300 border-400 text-black-alpha-90"/>
                                       <Button label="Save" icon="pi pi-upload" @click="saveUserRights" class=""/>
                                     </div>
                                   </template>

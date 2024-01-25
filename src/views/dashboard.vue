@@ -83,6 +83,7 @@ const updateChart = () => {
       }
     ]
   };
+  dataDataTable.value = transactionData.value
   // console.log(chartData.value)
 }
 
@@ -160,10 +161,10 @@ watch(dataChart, updateChart)
             <template #paginatorend>
               <Button type="button" icon="pi pi-download" @click="exportTable($event)" text />
             </template>
-            <template #empty>
+            <!-- <template #empty>
               <i class="pi pi-ban" style="font-size: 20px" />
               There are no transactions in {{ group.data.value.name }}
-            </template>
+            </template> -->
             <Column field="id" header="Id" style="width: 10%"></Column>
             <Column field="title" header="Title"></Column>
             <Column field="description" header="Description"></Column>
