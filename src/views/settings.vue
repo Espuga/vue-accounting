@@ -85,10 +85,11 @@ const createGroup = () => {
       users: users.value
     }
     loading.value = true;
-    axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/createGroup', newGroupData )
+    axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/settings/createGroup', newGroupData )
       .then((res) => {
         if(res.data.ok){
           // Refrescar groups
+          users.value = ""
           toast.add({ severity: 'success', summary: 'Created Correclty!', detail: 'Group Created Correctly.', life: 4000 });
           visible.value = false
           // Rigths
@@ -107,7 +108,7 @@ const createGroup = () => {
 // CHANGE MEMBERS
 const changeMembers = () => {
   loading.value = true
-  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/changeMembers', { params: { token: window.$cookies.get("auth"), groupId: group.value.id, users: users.value } })
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/settings/changeMembers', { params: { token: window.$cookies.get("auth"), groupId: group.value.id, users: users.value } })
     .then((res) => {
       if(res.data){
         users.value = ""
@@ -128,7 +129,7 @@ const confirmQuitUser = (id) => {
     icon: 'pi pi-exclamation-triangle',
     accept: () => {
       loading.value = true;
-      axios.delete(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/quitUser', {params: {groupId: group.value.id, userId: id}})
+      axios.delete(import.meta.env.VITE_APP_BACKEND_IP + '/settings/quitUser', {params: {groupId: group.value.id, userId: id}})
         .then((res) => {
           if(res.data){
             openChangeMembers()
@@ -152,7 +153,7 @@ const openChangeMembers = () => {
   }else{ 
     changeVisible.value = true
     loading.value = true;
-    axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getUsers', { params: { groupId: group.value.id } } )
+    axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/settings/getUsers', { params: { groupId: group.value.id } } )
       .then((res) => {
         if(res.data.ok){
           // posar els users amb una v-for o posar els usuaris en una llista, depen del component (slotProps.item)
@@ -177,7 +178,7 @@ const openDeleteGroup = () => {
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
         loading.value = true;
-        axios.delete(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/deleteGroup', {params: {groupId: group.value.id}})
+        axios.delete(import.meta.env.VITE_APP_BACKEND_IP + '/settings/deleteGroup', {params: {groupId: group.value.id}})
           .then((res) => {
             if(res.data){
               // Refrescar groups
@@ -212,7 +213,7 @@ const getRights = async () => {
 const openChangeSprintPeriods = () => {
   visibleSprintPeriods.value = true 
   loading.value = true
-  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getSprints')
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/settings/getSprints')
     .then((res) => {
       loading.value = false
       if(res.data.ok) {
@@ -224,7 +225,7 @@ const openChangeSprintPeriods = () => {
 const saveSprintPeriods = () => {
   // console.log(sprints.value)
   loading.value = true
-  axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/updateSprints', sprints.value) 
+  axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/settings/updateSprints', sprints.value) 
     .then((res) => {
       loading.value = false
       if(res.data){
@@ -244,7 +245,7 @@ const openChangeRights = (userId, name) => {
 }
 
 const getAllRights = (userId) => {
-  axios.get(import.meta.env.VITE_APP_BACKEND_IP + "/accounting/getRights") 
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + "/settings/getRights") 
     .then((res) => {
       if(res.data.ok) {
         rights.value = res.data.rights;
@@ -268,7 +269,7 @@ const getAllRights = (userId) => {
 
 const saveUserRights = () => {
   let object = {user_id: userIdRights.value, group_id: group.value.id, rights_id: selectedRights.value}
-  axios.post(import.meta.env.VITE_APP_BACKEND_IP + "/accounting/saveRights", object)
+  axios.post(import.meta.env.VITE_APP_BACKEND_IP + "/settings/saveRights", object)
     .then((res) => {
       if(res.data){
         toast.add({ severity: 'success', summary: 'Saved!', detail: 'The rights have been saved.', life: 3000 });
