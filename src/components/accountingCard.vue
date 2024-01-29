@@ -16,9 +16,11 @@ const group = inject('selectedGroup')
     <div class="icon">
       <i class="pi pi-chart-bar"></i>
     </div>
-    <a href="/accounting/dashboard" class="small-box-footer">
-      Dashboard <i class="fas fa-arrow-circle-right"></i>
-    </a>
+    <router-link v-slot="{ href, navigate }" to="/accounting/dashboard" custom>
+      <a :href="href" @click="navigate" class="small-box-footer">
+        Dashboard <i class="fas fa-arrow-circle-right"></i>
+      </a>
+    </router-link>
   </div>
 </template>
 

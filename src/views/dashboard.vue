@@ -113,6 +113,8 @@ const clickChart = (data) => {
   // console.log(data.name)
 }
 
+
+
 watch(transactionData, makeTable)
 watch(dataChart, updateChart)
 </script>
@@ -168,7 +170,7 @@ watch(dataChart, updateChart)
             <Column field="id" header="Id" style="width: 10%"></Column>
             <Column field="title" header="Title"></Column>
             <Column field="description" header="Description"></Column>
-            <Column field="amount" header="Amount" sortable></Column>
+            <Column field="amount" header="Amount" sortable bodyClass="text-green-500"></Column>
             <Column field="name" header="User"></Column>
             <Column field="data" header="Data" sortable></Column>
           </DataTable>

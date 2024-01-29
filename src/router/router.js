@@ -31,6 +31,10 @@ const router = createRouter({
       path: '/prova',
       name: 'Prova',
       component: () => import('@/views/prova.vue')
+    },
+    {
+      path: '/:pathMatch(.*)',
+      redirect: '/'
     }
   ]
 });

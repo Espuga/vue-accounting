@@ -272,6 +272,7 @@ const saveUserRights = () => {
   axios.post(import.meta.env.VITE_APP_BACKEND_IP + "/settings/saveRights", object)
     .then((res) => {
       if(res.data){
+        userRightsVisible.value = false
         toast.add({ severity: 'success', summary: 'Saved!', detail: 'The rights have been saved.', life: 3000 });
       }else {
         toast.add({ severity: 'error', summary: 'Error!', detail: 'Error saving the rights.', life: 3000 });
@@ -282,9 +283,8 @@ const saveUserRights = () => {
 // ON MOUNTED
 onMounted(() => {
   document.title = "Accounting - Settings"
-  // console.log(selectedGroup.data.value)
   group.value = selectedGroup.data.value
-  isAdmin.value = admin.value
+  isAdmin.value = admin.data.value
   getRights()
   
 })
@@ -313,52 +313,7 @@ onMounted(() => {
             <Dropdown @change="changeGroup()" v-model="group" :options="groups.data" optionLabel="name" placeholder="Select a Group" class="w-full md:w-14rem" />
           </div>
 
-          <!-- NEW GROUP -->
-          <div class="flex justify-content-between align-items-center mt-4">
-            <div class="flex align-items-center">
-              <i class="pi pi-plus-circle" style="font-size: 1.3rem"></i>
-              <span class="ml-2">New group</span>
-            </div>
-            <Button @click="visible=true" label="Create" />
-            <!-- DIALOG NEW GROUP -->
-            <Dialog v-model:visible="visible" modal :closable="false" :style="{ width: '50rem' }" 
-              :breakpoints="{ '1199px': '75vw', '575px': '90vw' } ">
-              <!-- HEADER DIALOG NEW GROUP -->
-              <template #header>
-                <div class="flex align-items-center">
-                  <i class="pi pi-plus-circle" style="font-size: 1.5rem"></i>
-                  <b class="text-2xl ml-2">New Group</b>
-                </div>
-              </template>
-              <!-- CONTENT DIALOG NEW GROUP -->
-              <div class="mt-4">
-                <!-- GROUP NAME & STRATING AMOUNT -->
-                <div class="card flex">
-                  <span class="col-7 p-float-label">
-                    <InputText v-model="groupName" class="w-full" :class="{'p-invalid': invalidGroupName}" />
-                    <label class="pl-2" for="groupName">Group Name</label>
-                  </span>
-                  <span class="col-5 p-float-label">
-                    <InputNumber v-model="startAmount" class="w-full" :minFractionDigits="0" :maxFractionDigits="2" mode="currency" currency="EUR" locale="de-DE" />
-                    <label class="pl-2" for="startAmount">Starting Amount</label>
-                  </span>
-                </div>
-                <div class="card flex mt-2">
-                  <span class="col-12 p-float-label">
-                    <Textarea autoResize rows="5" cols="30" v-model="users" id="users" placeholder="marc, lluc..." class="w-full" />
-                    <label class="pl-2 pt-2" for="users">Users</label>
-                  </span>
-                </div>
-              </div>
-              <!-- FOOTER DIALOG NEW GROUP -->
-              <template #footer>
-                <div class="flex justify-content-center">
-                  <Button label="Cancel" icon="pi pi-times" @click="visible = false" class="surface-300 border-400 text-black-alpha-90"/>
-                  <Button label="Submit" icon="pi pi-upload" @click="createGroup()" class="bg-green-500 border-green-600"/>
-                </div>
-              </template>
-            </Dialog>
-          </div>
+          
           <Divider/>
 
           
@@ -530,6 +485,52 @@ onMounted(() => {
               </div> 
             </div><!-- fi change members -->
 
+            <!-- NEW GROUP -->
+            <div class="ml-6 flex justify-content-between align-items-center mt-4">
+              <div class="flex align-items-center">
+                <i class="pi pi-plus-circle" style="font-size: 1.3rem"></i>
+                <span class="ml-2">New group</span>
+              </div>
+              <Button @click="visible=true" label="Create" />
+              <!-- DIALOG NEW GROUP -->
+              <Dialog v-model:visible="visible" modal :closable="false" :style="{ width: '50rem' }" 
+                :breakpoints="{ '1199px': '75vw', '575px': '90vw' } ">
+                <!-- HEADER DIALOG NEW GROUP -->
+                <template #header>
+                  <div class="flex align-items-center">
+                    <i class="pi pi-plus-circle" style="font-size: 1.5rem"></i>
+                    <b class="text-2xl ml-2">New Group</b>
+                  </div>
+                </template>
+                <!-- CONTENT DIALOG NEW GROUP -->
+                <div class="mt-4">
+                  <!-- GROUP NAME & STRATING AMOUNT -->
+                  <div class="card flex">
+                    <span class="col-7 p-float-label">
+                      <InputText v-model="groupName" class="w-full" :class="{'p-invalid': invalidGroupName}" />
+                      <label class="pl-2" for="groupName">Group Name</label>
+                    </span>
+                    <span class="col-5 p-float-label">
+                      <InputNumber v-model="startAmount" class="w-full" :minFractionDigits="0" :maxFractionDigits="2" mode="currency" currency="EUR" locale="de-DE" />
+                      <label class="pl-2" for="startAmount">Starting Amount</label>
+                    </span>
+                  </div>
+                  <div class="card flex mt-2">
+                    <span class="col-12 p-float-label">
+                      <Textarea autoResize rows="5" cols="30" v-model="users" id="users" placeholder="marc, lluc..." class="w-full" />
+                      <label class="pl-2 pt-2" for="users">Users</label>
+                    </span>
+                  </div>
+                </div>
+                <!-- FOOTER DIALOG NEW GROUP -->
+                <template #footer>
+                  <div class="flex justify-content-center">
+                    <Button label="Cancel" icon="pi pi-times" @click="visible = false" class="surface-300 border-400 text-black-alpha-90"/>
+                    <Button label="Submit" icon="pi pi-upload" @click="createGroup()" class="bg-green-500 border-green-600"/>
+                  </div>
+                </template>
+              </Dialog>
+            </div><!-- FI NEW GROUP -->
           </div> <!-- FI GROUP SETTINGS -->
 
 

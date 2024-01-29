@@ -17,6 +17,20 @@ const router = useRouter()
 const toast = useToast();
 const menuItems = ref([
   {
+    label: '',
+    icon: 'pi pi-bars',
+    items: [
+    {
+        label: 'Log Out',
+        icon: 'pi pi-sign-out',
+        command: () => {
+          openLogOut()
+        }
+      }
+    ]
+    
+  },
+  {
     label: 'Home',
     icon: 'pi pi-home',
     route: '/'
@@ -244,41 +258,76 @@ const getRights = async (groupId) => {
   } 
 }
 
+async function encryptPassword(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashedPassword = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+  return hashedPassword;
+}
+
 // SEND LOGIN FUNCTION
 const login = () => {
   loading.value = true
-  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/login', { params : { username: username.value, password: password.value }})
-    .then((res) => {
-      loading.value = false
-      if(res.data.ok){
-        if(res.data.token != ""){
-          window.$cookies.set('auth', res.data.token)
-          toast.add({ severity: 'success', summary: 'Correct credentials!', detail: '', life: 4000 });
-          logged.value = true
-          user.value = res.data.name
-
-          // Get rights
-          res.data.rights.forEach((right) => {
-            IndexedDBService.agregarDato({"rights": [right.right_id], groupId: right.group_id})
-          })
-
-          // select default group
-          loading.value = true
-          axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
-            .then((res) => {
-              loading.value = false
-              groups.value = res.data.groups
-              group.value = res.data.groups[0]
-              getRights(group.value.id)
-              getHome()
-              getChart(0)
-            })
-        }else{
-          toast.add({ severity: 'error', summary: 'Incorrect credentials!', detail: 'Username or password incorrect.', life: 4000 });
-        }
-      }
+  encryptPassword(password.value)
+    .then((pass) =>{
+      axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/login', { params : { username: username.value, password: pass }})
+        .then((res) => {
+          loading.value = false
+          if(res.data.ok){
+            if(res.data.token != ""){
+              loginDialog.value = false
+              window.$cookies.set('auth', res.data.token)
+              toast.add({ severity: 'success', summary: 'Correct credentials!', detail: '', life: 4000 });
+              
+              loading.value = true
+              logged.value = true
+              axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/getUsername', { params: { token: window.$cookies.get("auth") } })
+                .then((res) => {
+                  loading.value = false
+                  user.value = res.data
+                })
+              axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
+                .then((res) => {
+                  groups.value = res.data.groups
+                  group.value = res.data.groups[0]
+                  getRights(group.value.id)
+                  getHome()
+                  getChart(0)
+                })
+              
+              
+              /* logged.value = true
+              user.value = res.data.name
+    
+              // Get rights
+              res.data.rights.forEach((right) => {
+                IndexedDBService.agregarDato({"rights": [right.right_id], groupId: right.group_id})
+              })
+    
+              // select default group
+              loading.value = true
+              axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
+                .then((res) => {
+                  loading.value = false
+                  groups.value = res.data.groups
+                  group.value = res.data.groups[0]
+                  getRights(group.value.id)
+                  getHome()
+                  getChart(0)
+                }) */
+            }else{
+              toast.add({ severity: 'error', summary: 'Incorrect credentials!', detail: 'Username or password incorrect.', life: 4000 });
+            }
+          } else {
+            toast.add({ severity: 'error', summary: 'Incorrect credentials!', detail: 'Username or password incorrect.', life: 4000 });
+          }
+        })
     })
-  loginDialog.value = false
+    .catch ((error) => {
+      console.error(error)
+    })
 }
 
 // OPEN CREATE ACCOUNT DIALOG
@@ -296,29 +345,35 @@ const submitCreateAccount = () => {
     }else{
       invalidAccountPassword.value = false
       loading.value = true;
-      let object = {username: accountUsername.value, name: accountName.value, password: accountPassword1.value}
-      axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/auth/createAccount', object, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-        .then((res) => {
-          loading.value = false
-          if(res.data.token != ""){
-            user.value = res.data.user;
-            window.$cookies.set('auth', res.data.token)
-            toast.add({ severity: 'success', summary: 'User created successfully!', detail: '', life: 4000 });
-            logged.value = true
-            createAccountDialog.value = false
-            invalidAccountUsername.value = false
-          }else{
-            if(res.data.msg) {
-              invalidAccountUsername.value = true
-              toast.add({ severity: 'error', summary: 'Error creating new user!', detail: res.data.msg, life: 4000 });
-            }else {
-              toast.add({ severity: 'error', summary: 'Error creating new user!', detail: 'Error creating the new user, try it again.', life: 4000 });
+      encryptPassword(accountPassword1.value)
+        .then((pass) => {
+          let object = {username: accountUsername.value, name: accountName.value, password: pass}
+          axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/auth/createAccount', object, {
+            headers: {
+              'Content-Type': 'application/json'
             }
-          }
+          })
+            .then((res) => {
+              loading.value = false
+              if(res.data.token != ""){
+                user.value = res.data.user;
+                window.$cookies.set('auth', res.data.token)
+                toast.add({ severity: 'success', summary: 'User created successfully!', detail: '', life: 4000 });
+                logged.value = true
+                createAccountDialog.value = false
+                invalidAccountUsername.value = false
+              }else{
+                if(res.data.msg) {
+                  invalidAccountUsername.value = true
+                  toast.add({ severity: 'error', summary: 'Error creating new user!', detail: res.data.msg, life: 4000 });
+                }else {
+                  toast.add({ severity: 'error', summary: 'Error creating new user!', detail: 'Error creating the new user, try it again.', life: 4000 });
+                }
+              }
+            })
+        })
+        .catch((error) => {
+          console.error(error)
         })
     }
   }else{
@@ -335,6 +390,15 @@ const getHome = () => {
       }
     })
 }
+
+const openLogOut = () => {
+  deleteCookie('auth')
+  window.location.href = '/';
+  // router.replace({ path: '/' });  
+}
+
+/* const currentRoute = router.currentRoute.value;
+  router.push({ path: currentRoute.path });  */
 
 // ON MOUNTED
 onMounted(() => {

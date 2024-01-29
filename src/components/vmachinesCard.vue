@@ -11,9 +11,11 @@
     <div class="icon">
       <i class="pi pi-desktop"></i>
     </div>
-    <a href="vmachines" class="small-box-footer">
-      VMachines <i class="fas fa-arrow-circle-right"></i>
-    </a>
+    <router-link v-slot="{ href, navigate }" to="/vmachines" custom>
+      <a :href="href" @click="navigate" class="small-box-footer">
+        VMachines <i class="fas fa-arrow-circle-right"></i>
+      </a>
+    </router-link>
   </div>
 </template>
 
