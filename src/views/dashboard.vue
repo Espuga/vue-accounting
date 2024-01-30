@@ -158,7 +158,8 @@ watch(dataChart, updateChart)
           <!-- TABLE -->
           <DataTable :value="dataDataTable" stripedRows paginator :rows="7" 
           :exportFilename="getFileName(false)" ref="transactionDataExport" 
-          tableStyle="min-width: 20rem" class="p-datatable-sm" > 
+          tableStyle="min-width: 20rem" class="p-datatable-sm" 
+          :rowClass="({ amount }) => amount > 0 ? 'text-green-500': 'text-red-500'"> 
             <template #paginatorstart></template>
             <template #paginatorend>
               <Button type="button" icon="pi pi-download" @click="exportTable($event)" text />
@@ -167,12 +168,12 @@ watch(dataChart, updateChart)
               <i class="pi pi-ban" style="font-size: 20px" />
               There are no transactions in {{ group.data.value.name }}
             </template> -->
-            <Column field="id" header="Id" style="width: 10%"></Column>
-            <Column field="title" header="Title"></Column>
-            <Column field="description" header="Description"></Column>
-            <Column field="amount" header="Amount" sortable bodyClass="text-green-500"></Column>
-            <Column field="name" header="User"></Column>
-            <Column field="data" header="Data" sortable></Column>
+            <Column field="id" header="Id" style="width: 10%" class="text-900"></Column>
+            <Column field="title" header="Title" class="text-900"></Column>
+            <Column field="description" header="Description" class="text-900"></Column>
+            <Column field="amount" header="Amount" sortable></Column>
+            <Column field="name" header="User" class="text-900"></Column>
+            <Column field="data" header="Data" sortable class="text-900"></Column>
           </DataTable>
         </Panel>
       </div>

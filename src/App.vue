@@ -258,21 +258,24 @@ const getRights = async (groupId) => {
   } 
 }
 
-async function encryptPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashedPassword = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
-  return hashedPassword;
+const hash = async (string) => {
+  const utf8 = new TextEncoder().encode(string);
+  return crypto.subtle.digest('SHA-256', utf8).then((hashBuffer) => {
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((bytes) => bytes.toString(16).padStart(2, '0'))
+      .join('');
+    return hashHex;
+  });
 }
 
 // SEND LOGIN FUNCTION
-const login = () => {
+const login = async () => {
   loading.value = true
-  encryptPassword(password.value)
-    .then((pass) =>{
-      axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/login', { params : { username: username.value, password: pass }})
+
+  hash(password.value)
+    .then((res) => {
+      axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/login', { params : { username: username.value, password: res }})
         .then((res) => {
           loading.value = false
           if(res.data.ok){
@@ -280,25 +283,7 @@ const login = () => {
               loginDialog.value = false
               window.$cookies.set('auth', res.data.token)
               toast.add({ severity: 'success', summary: 'Correct credentials!', detail: '', life: 4000 });
-              
-              loading.value = true
               logged.value = true
-              axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/getUsername', { params: { token: window.$cookies.get("auth") } })
-                .then((res) => {
-                  loading.value = false
-                  user.value = res.data
-                })
-              axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
-                .then((res) => {
-                  groups.value = res.data.groups
-                  group.value = res.data.groups[0]
-                  getRights(group.value.id)
-                  getHome()
-                  getChart(0)
-                })
-              
-              
-              /* logged.value = true
               user.value = res.data.name
     
               // Get rights
@@ -316,7 +301,7 @@ const login = () => {
                   getRights(group.value.id)
                   getHome()
                   getChart(0)
-                }) */
+                })
             }else{
               toast.add({ severity: 'error', summary: 'Incorrect credentials!', detail: 'Username or password incorrect.', life: 4000 });
             }
@@ -325,9 +310,10 @@ const login = () => {
           }
         })
     })
-    .catch ((error) => {
+    .catch((error) => {
       console.error(error)
     })
+
 }
 
 // OPEN CREATE ACCOUNT DIALOG
