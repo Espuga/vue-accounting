@@ -1,7 +1,7 @@
 <script setup>
 // =============================
 //          Import
-import { ref, onMounted, provide } from "vue";
+import { ref, onMounted, provide, inject } from "vue";
 import { useToast } from "primevue/usetoast";
 import axios from 'axios';
 import { useRouter } from 'vue-router';
@@ -78,9 +78,6 @@ provide('selectedGroup', {
   updateGroup(newGroup) {
     group.value = newGroup;
     getHome()
-  },
-  updateChart(gr){
-    getChart(gr)
   }
 }); 
 const groups = ref([])
@@ -103,6 +100,8 @@ provide('isAdmin', {
     getRights(groupId)
   },
 }); 
+const teacher = ref(false)
+provide('teacher', teacher.value)
 
 // Create Account 
 const createAccountDialog = ref(false)
@@ -113,20 +112,6 @@ const accountPassword2 = ref(null)
   // Create Account invalid
 const invalidAccountUsername = ref(false)
 const invalidAccountPassword = ref(false)
-
-// Accounting Dashboard
-const dataTable = ref([])
-provide('dataTable', dataTable); 
-const labelsChart = ref([])
-provide('labelsChart', labelsChart); 
-const dataChart = ref([])
-provide('dataChart', dataChart); 
-const addedData = ref([])
-provide('addedData', addedData); 
-const withdrawedData = ref([])
-provide('withdrawedData', withdrawedData); 
-const dataChart1 = ref([])
-provide('dataChart1', dataChart1); 
 
 // Accounting Money
 const money = ref(0)
@@ -173,32 +158,6 @@ const closeCreateAccountDialog = () => {
   createAccountDialog.value = false
 }
 
-// GET CHART DATA
-const getChart = (gr) => {
-  try {
-    if(gr == 0){
-      gr = group.value.id
-    }
-    loading.value = true
-    axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getInit', { params: { groupId: gr } })
-      .then((res) => {
-        loading.value = false
-        if(res.data.ok){
-          // DataTable
-          dataTable.value = res.data.dataTable
-          // Weekly Chart
-          labelsChart.value = res.data.dataChart.dates
-          dataChart.value = res.data.dataChart.totalData
-          addedData.value = res.data.dataChart.addedData
-          withdrawedData.value = res.data.dataChart.withdrawedData
-          dataChart1.value = res.data.dataChart.totalData
-        }
-      })
-  }catch {
-    toast.add({ severity: 'warn', summary: 'No Groups!', detail: 'You are not in any group.', life: 4000 });
-  }
-}
-
 // SUBMIT TRANSACTION DATA
 const submitTransaction = () => {
   if(fundsAmount.value == 0 || fundsAmount.value == null || fundsTitle.value == "" || fundsDescription.value == ""){
@@ -228,8 +187,7 @@ const submitTransaction = () => {
           toast.add({ severity: 'success', summary: 'Transaction Correctly!', detail: 'The transaction was saved correctly.', life: 4000 });
           // Close Dialog
           transactionDialog.value = false;
-          //location.reload();
-          getChart(0)
+          window.location.reload()
         }else{
           toast.add({ severity: 'error', summary: 'Transaction Error!', detail: 'The transaction couldn\'t be completed.', life: 4000 });
         }
@@ -256,9 +214,19 @@ const getRights = async (groupId) => {
   } else {
     admin.value = false
   } 
+  rights = await IndexedDBService.obtenerDatos(0)
+  if(rights != undefined){
+    if(rights.rights.includes(2, 0)) {
+      teacher.value = true
+    } else {
+      teacher.value = false
+    }
+  } else {
+    teacher.value = false
+  }
 }
 
-const hash = async (string) => {
+/* const hash = async (string) => {
   const utf8 = new TextEncoder().encode(string);
   return crypto.subtle.digest('SHA-256', utf8).then((hashBuffer) => {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -267,51 +235,44 @@ const hash = async (string) => {
       .join('');
     return hashHex;
   });
-}
+} */
 
 // SEND LOGIN FUNCTION
 const login = async () => {
   loading.value = true
 
-  hash(password.value)
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/login', { params : { username: username.value, password: password.value }})
     .then((res) => {
-      axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/login', { params : { username: username.value, password: res }})
-        .then((res) => {
-          loading.value = false
-          if(res.data.ok){
-            if(res.data.token != ""){
-              loginDialog.value = false
-              window.$cookies.set('auth', res.data.token)
-              toast.add({ severity: 'success', summary: 'Correct credentials!', detail: '', life: 4000 });
-              logged.value = true
-              user.value = res.data.name
-    
-              // Get rights
-              res.data.rights.forEach((right) => {
-                IndexedDBService.agregarDato({"rights": [right.right_id], groupId: right.group_id})
-              })
-    
-              // select default group
-              loading.value = true
-              axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
-                .then((res) => {
-                  loading.value = false
-                  groups.value = res.data.groups
-                  group.value = res.data.groups[0]
-                  getRights(group.value.id)
-                  getHome()
-                  getChart(0)
-                })
-            }else{
-              toast.add({ severity: 'error', summary: 'Incorrect credentials!', detail: 'Username or password incorrect.', life: 4000 });
-            }
-          } else {
-            toast.add({ severity: 'error', summary: 'Incorrect credentials!', detail: 'Username or password incorrect.', life: 4000 });
-          }
-        })
-    })
-    .catch((error) => {
-      console.error(error)
+      loading.value = false
+      if(res.data.ok){
+        if(res.data.token != ""){
+          loginDialog.value = false
+          window.$cookies.set('auth', res.data.token)
+          toast.add({ severity: 'success', summary: 'Correct credentials!', detail: '', life: 4000 });
+          logged.value = true
+          user.value = res.data.name
+
+          // Get rights
+          res.data.rights.forEach((right) => {
+            IndexedDBService.agregarDato({"rights": [right.right_id], groupId: right.group_id})
+          })
+
+          // select default group
+          loading.value = true
+          axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
+            .then((res) => {
+              loading.value = false
+              groups.value = res.data.groups
+              group.value = res.data.groups[0]
+              getRights(group.value.id)
+              getHome()
+            })
+        }else{
+          toast.add({ severity: 'error', summary: 'Incorrect credentials!', detail: 'Username or password incorrect.', life: 4000 });
+        }
+      } else {
+        toast.add({ severity: 'error', summary: 'Incorrect credentials!', detail: 'Username or password incorrect.', life: 4000 });
+      }
     })
 
 }
@@ -331,35 +292,29 @@ const submitCreateAccount = () => {
     }else{
       invalidAccountPassword.value = false
       loading.value = true;
-      encryptPassword(accountPassword1.value)
-        .then((pass) => {
-          let object = {username: accountUsername.value, name: accountName.value, password: pass}
-          axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/auth/createAccount', object, {
-            headers: {
-              'Content-Type': 'application/json'
+      let object = {username: accountUsername.value, name: accountName.value, password: accountPassword1.value}
+      axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/auth/createAccount', object, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+        .then((res) => {
+          loading.value = false
+          if(res.data.token != ""){
+            user.value = res.data.user;
+            window.$cookies.set('auth', res.data.token)
+            toast.add({ severity: 'success', summary: 'User created successfully!', detail: '', life: 4000 });
+            logged.value = true
+            createAccountDialog.value = false
+            invalidAccountUsername.value = false
+          }else{
+            if(res.data.msg) {
+              invalidAccountUsername.value = true
+              toast.add({ severity: 'error', summary: 'Error creating new user!', detail: res.data.msg, life: 4000 });
+            }else {
+              toast.add({ severity: 'error', summary: 'Error creating new user!', detail: 'Error creating the new user, try it again.', life: 4000 });
             }
-          })
-            .then((res) => {
-              loading.value = false
-              if(res.data.token != ""){
-                user.value = res.data.user;
-                window.$cookies.set('auth', res.data.token)
-                toast.add({ severity: 'success', summary: 'User created successfully!', detail: '', life: 4000 });
-                logged.value = true
-                createAccountDialog.value = false
-                invalidAccountUsername.value = false
-              }else{
-                if(res.data.msg) {
-                  invalidAccountUsername.value = true
-                  toast.add({ severity: 'error', summary: 'Error creating new user!', detail: res.data.msg, life: 4000 });
-                }else {
-                  toast.add({ severity: 'error', summary: 'Error creating new user!', detail: 'Error creating the new user, try it again.', life: 4000 });
-                }
-              }
-            })
-        })
-        .catch((error) => {
-          console.error(error)
+          }
         })
     }
   }else{
@@ -404,7 +359,6 @@ onMounted(() => {
         group.value = res.data.groups[0]
         getRights(group.value.id)
         getHome()
-        getChart(0)
       })
   }else{
     loginDialog.value = true

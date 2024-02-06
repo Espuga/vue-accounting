@@ -1,11 +1,28 @@
 <script setup>
+import { ref, onMounted, inject } from 'vue'
+import axios from 'axios'
+
+const machines = ref()
+const group = inject('selectedGroup')
+
+onMounted(() => {
+  // console.log(group.data.value.id)
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + "/vmachines/getNMachines", {params: {groupId: group.data.value.id}})
+    .then((res) => {
+      if(res.data.ok){
+        machines.value = res.data.num
+      }else {
+
+      }
+    })
+})
 
 </script>
 
 <template>
   <div class="small-box bg-blue">
     <div class="inner">
-      <h3>18</h3>
+      <h3>{{ machines }}</h3>
       <p>Proxmox VMachines</p>
     </div>
     <div class="icon">

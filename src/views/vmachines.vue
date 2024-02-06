@@ -1,342 +1,345 @@
 <script setup>
-  import { ref, onMounted } from 'vue';
+// =============================
+//           Import
+import { ref, onMounted, inject } from "vue";
+import { useToast } from "primevue/usetoast";
+import axios from 'axios';
+import IndexedDBService from './../services/IndexedDBService'
 
-  import { use } from "echarts/core";
-  import { CanvasRenderer } from "echarts/renderers";
-  import { LineChart, BarChart } from "echarts/charts";
-  import {
-    TitleComponent,
-    TooltipComponent,
-    ToolboxComponent,
-    LegendComponent,
-    GridComponent,
-  } from "echarts/components";
-  // import VChart from "vue-echarts";
-  import axios from 'axios';
-  import { format } from 'date-fns';
+// =============================
+//            Const
 
-  const charging = ref(false)
+const toast = useToast();
 
-  use([
-    CanvasRenderer,
-    LineChart,
-    BarChart,
-    TitleComponent,
-    TooltipComponent,
-    LegendComponent,
-    GridComponent,
-    ToolboxComponent
-  ]);
+const teacher = ref(false)
+const group = inject('selectedGroup')
+const groups = inject('groups');
 
-  const startDate = ref();
-  const endDate = ref();
-  const priceCpu = ref(2);
-  const priceMaxdisk = ref(0.56);
+// SELECTORS
+const sprints = ref()
+const sprint = ref()
+const startDate = ref()
+const endDate = ref()
+const priceCpu = ref()
+const priceDisk = ref()
 
-  const dataTable22 = ref();
-  const priceCpu22 = ref(0)
-  const sumMaxDisk22 = ref()
-  const priceMaxDisk22 = ref()
+// Datatable
+const dataTable = ref()
+const sumCpu = ref()
+const sumDisk = ref()
 
-  const dataTable23 = ref();
-  const priceCpu23 = ref(0)
-  const sumMaxDisk23 = ref()
-  const priceMaxDisk23 = ref()
 
-  const dataTable24 = ref();
-  const priceCpu24 = ref(0)
-  const sumMaxDisk24 = ref()
-  const priceMaxDisk24 = ref()
+// Teacher
+const dataTable22 = ref();
+const priceCpu22 = ref(0)
+const sumMaxDisk22 = ref()
+const priceMaxDisk22 = ref()
 
-  const optionChangeoverYears = ref();
-  const optionCpus = ref();
-  const optionMaxDisk = ref();
+const dataTable23 = ref();
+const priceCpu23 = ref(0)
+const sumMaxDisk23 = ref()
+const priceMaxDisk23 = ref()
 
-  const visible22 = ref(false);
-  const visible23 = ref(false);
-  const visible24 = ref(false);
+const dataTable24 = ref();
+const priceCpu24 = ref(0)
+const sumMaxDisk24 = ref()
+const priceMaxDisk24 = ref()
 
-  const getData = () => {
-    const start = format(startDate.value, 'yyyy-MM-dd');
-    const end = format(endDate.value, 'yyyy-MM-dd');
-    if(priceCpu.value != "" && priceMaxdisk.value != ""){
-      charging.value = true
-      axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/proxmox/getInit', {params: {start: start, end: end, priceCpu: priceCpu.value, priceDisk: priceMaxdisk.value}})
-        .then(res => {
-          charging.value = false
-          if(res.data.ok){
-            priceCpu22.value = 0
-            priceCpu23.value = 0
-            priceCpu24.value = 0
-            // Dades taula
-            dataTable22.value = res.data.tableVlan22;
-            dataTable23.value = res.data.tableVlan23;
-            dataTable24.value = res.data.tableVlan24;
-            // Suma cpu amb preu
-            dataTable22.value.forEach((row) => {
-              priceCpu22.value += row.cpus*row.cpu*priceCpu.value;
-            })
-            dataTable23.value.forEach((row) => {
-              priceCpu23.value += row.cpus*row.cpu*priceCpu.value;
-            })
-            dataTable24.value.forEach((row) => {
-              priceCpu24.value += row.cpus*row.cpu*priceCpu.value;
-            })
-            priceCpu22.value = Math.round((priceCpu22.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-            priceCpu23.value = Math.round((priceCpu23.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-            priceCpu24.value = Math.round((priceCpu24.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-            // Suma MaxDisk sense preu
-            sumMaxDisk22.value = res.data.sumDisk22;
-            sumMaxDisk23.value = res.data.sumDisk23;
-            sumMaxDisk24.value = res.data.sumDisk24;
-            // Suma MaxDisk amb preu
-            priceMaxDisk22.value = Math.round((res.data.sumDisk22*priceMaxdisk.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-            priceMaxDisk23.value = Math.round((res.data.sumDisk23*priceMaxdisk.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-            priceMaxDisk24.value = Math.round((res.data.sumDisk24*priceMaxdisk.value) * Math.pow(10, 2)) / Math.pow(10, 2);
+const visible22 = ref(false);
+const visible23 = ref(false);
+const visible24 = ref(false);
+
+const groupsData = ref()
+
+// =============================
+//          Functions
+
+const getSelectors = async () => {
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + "/vmachines/getSelectors")
+    .then((res) => {
+      if(res.data.ok){
+        priceCpu.value = res.data.priceCpu
+        priceDisk.value = res.data.priceDisk
+        sprints.value = res.data.sprints
+        // Selecionar sprint actual
+        let date = new Date()
+        res.data.sprints.forEach((spr) => {
+          /* if(spr.name == "Sprint 6") {
+            sprint.value = spr
+            startDate.value = spr.start
+            endDate.value = spr.end
+            getDataTable()
+          } */
+          if(date >= new Date(spr.start) && date <= new Date(spr.end)) {
+            sprint.value = spr
+            startDate.value = spr.start
+            endDate.value = spr.end
           }
         })
+
+        
+        
+
+      }else {
+        toast.add({ severity: 'error', summary: 'Error!', detail: 'Error getting the selectors. Try it again.', life: 4000 });
+      }
+    })
+}
+
+const getInitTeacher = () => {
+  if(startDate.value == undefined){
+    toast.add({ severity: 'error', summary: 'Error!', detail: 'Error getting the data. Select a sprint.', life: 4000 });
+    return;
+  }
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/proxmox/getInit', {params: {start: startDate.value, end: endDate.value, priceCpu: priceCpu.value, priceDisk: priceDisk.value}})
+    .then(res => {
+      if(res.data.ok){
+        priceCpu22.value = 0
+        priceCpu23.value = 0
+        priceCpu24.value = 0
+        // Dades taula
+        dataTable22.value = res.data.tableVlan22;
+        dataTable23.value = res.data.tableVlan23;
+        dataTable24.value = res.data.tableVlan24;
+        // Suma cpu amb preu
+        dataTable22.value.forEach((row) => {
+          priceCpu22.value += row.cpus*row.cpu*parseFloat(priceCpu.value);
+        })
+        dataTable23.value.forEach((row) => {
+          priceCpu23.value += row.cpus*row.cpu*parseFloat(priceCpu.value);
+        })
+        dataTable24.value.forEach((row) => {
+          priceCpu24.value += row.cpus*row.cpu*parseFloat(priceCpu.value);
+        })
+        priceCpu22.value = Math.round((priceCpu22.value) * Math.pow(10, 2)) / Math.pow(10, 2);
+        priceCpu23.value = Math.round((priceCpu23.value) * Math.pow(10, 2)) / Math.pow(10, 2);
+        priceCpu24.value = Math.round((priceCpu24.value) * Math.pow(10, 2)) / Math.pow(10, 2);
+        // Suma MaxDisk sense preu
+        sumMaxDisk22.value = res.data.sumDisk22;
+        sumMaxDisk23.value = res.data.sumDisk23;
+        sumMaxDisk24.value = res.data.sumDisk24;
+        // Suma MaxDisk amb preu
+        priceMaxDisk22.value = Math.round((res.data.sumDisk22*parseFloat(priceDisk.value)) * Math.pow(10, 2)) / Math.pow(10, 2);
+        priceMaxDisk23.value = Math.round((res.data.sumDisk23*parseFloat(priceDisk.value)) * Math.pow(10, 2)) / Math.pow(10, 2);
+        priceMaxDisk24.value = Math.round((res.data.sumDisk24*parseFloat(priceDisk.value)) * Math.pow(10, 2)) / Math.pow(10, 2);
+      }
+    })
+}
+
+const changeSprintsDates = () => {
+  sprints.value.forEach((spr) => {
+    if(spr.name == sprint.value.name) {
+      startDate.value = spr.start
+      endDate.value = spr.end
+      getDataTable()
+      // if(!teacher) {
+      //   getDataTable()
+      // }else{
+      //   getInitTeacher()
+      // }
     }
-    /*axios.get(import.meta.env.VUE_APP_BACKEND_IP + '/proxmox/getCpuUsage', {params: {start: start, end: end}})
-      .then(res => {
+  })
+} 
+
+const getDataTable = () => {
+  // console.log(teacher.value)
+  if(teacher.value) {
+    let groupsId = ""
+    groups.data.value.forEach((gr) => {
+      // console.log(gr.id)
+      groupsId += gr.id+","
+    })
+    groupsId.substring(0, groupsId.length - 1)
+    axios.get(import.meta.env.VITE_APP_BACKEND_IP + "/vmachines/getGroupsDataTable", {params: {groupsId: groupsId, start: startDate.value, end: endDate.value}})
+      .then((res) => {
+        if(res.data.ok) {
+          groupsData.value = res.data.dades
+          /* res.data.dades.forEach((gr) => {
+            console.log(gr)
+          }) */
+        }else {
+          toast.add({ severity: 'error', summary: 'Error!', detail: 'Error getting the data. Try it again.', life: 4000 });
+        }
+      })
+  }else{
+    axios.get(import.meta.env.VITE_APP_BACKEND_IP + "/vmachines/getDataTable", {params: {groupId: group.data.value.id, start: startDate.value, end: endDate.value}})
+      .then((res) => {
         if(res.data.ok){
-          optionChangeoverYears.value.xAxis.data = res.data.dies;
-          optionChangeoverYears.value.legend.data = []
-          optionChangeoverYears.value.series = []
-          res.data.maquines.forEach((maquina) => {
-            optionChangeoverYears.value.legend.data.push(maquina.nom)
-            optionChangeoverYears.value.series.push({
-              name: maquina.nom,
-              type: 'line',
-              data: maquina.valor
-            })// Fi push
-          })
-          
+          dataTable.value = res.data.dataTable
+          sumCpu.value = res.data.sumCpu
+          sumDisk.value = res.data.sumDisk
+        }else {
+          toast.add({ severity: 'error', summary: 'Error!', detail: 'Error getting the data. Try it again.', life: 4000 });
         }
-      })*/
+      })
   }
+}
 
-  onMounted(() => {
-    document.title = "VMachines"
-    optionChangeoverYears.value = {
-      title: {
-        text: ''
-      },
-      tooltip: {
-        trigger: 'axis'
-      },
-      legend: {
-        data: [],
-        top: '6%'
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        containLabel: true
-      },
-      xAxis: {
-        type: 'category',
-        data: []
-      },
-      yAxis: {
-        type: 'value'
-      },
-      series: []
-    };
-    optionCpus.value = {
-      xAxis: {
-        type: 'category',
-        data: ['Linux', 'Windows', 'CM10', 'TrueNas', 'HomeAssistant', 'Pnet', 'Linux']
-      },
-      yAxis: {
-        type: 'value'
-      },
-      series: [
-        {
-          data: [4, 12, 8, 6, 4, 4, 2],
-          type: 'bar'
-        }
-      ]
-    };
-    optionMaxDisk.value = {
-      xAxis: {
-        type: 'category',
-        data: ['Linux', 'Windows', 'CM10', 'TrueNas', 'HomeAssistant', 'Pnet', 'Linux']
-      },
-      yAxis: {
-        type: 'value'
-      },
-      series: [
-        {
-          data: [48, 64, 48, 32, 32, 16, 24],
-          type: 'bar'
-        }
-      ]
-    };
-    let today = new Date()
-    endDate.value = today
-    const dateAgo = new Date(today);
-    dateAgo.setDate(today.getDate() - 21);
-    startDate.value = dateAgo;
-    getData()
-  });
-
-  const cahngeDate = () => {
-    if(startDate.value && endDate.value){
-    
-      getData()
+const getRights = async () => {
+  let rights = await IndexedDBService.obtenerDatos(0)
+  if(rights != undefined){
+    if(rights.rights.includes(2, 0)) {
+      teacher.value = true
+      // getInitTeacher()
+    } else {
+      teacher.value = false
+      // getDataTable()
     }
+  } else {
+    teacher.value = false
+    // getDataTable()
   }
+  getSelectors()
+  
+}
 
-  /* const changePriceCpu = (price) => {
-    priceCpu22.value = 0
-    priceCpu23.value = 0
-    priceCpu24.value = 0
-    dataTable22.value.forEach((row) => {
-      priceCpu22.value += row.cpus*row.cpu*price.value;
+
+
+/* if(!teacher){
+          getDataTable()
+        }else{
+          getInitTeacher()
+        } */
+
+const savePrices = () => {
+  let obj = {priceCpu : priceCpu.value, priceDisk: priceDisk.value}
+  console.log(obj)
+  axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/vmachines/savePrices', obj)
+    .then((res) => {
+      if(res.data){
+        toast.add({ severity: 'success', summary: 'Saved!', detail: 'Prices have been saved successfully.', life: 4000 });
+      }else {
+        toast.add({ severity: 'error', summary: 'Error!', detail: 'Error saving the prices.', life: 4000 });
+      }
     })
-    dataTable23.value.forEach((row) => {
-      priceCpu23.value += row.cpus*row.cpu*price.value;
+}
+
+const doInvoice = () => {
+  let vlans = []
+  let prCpu = []
+  let prDisk = []
+  groupsData.value.forEach((gr) => {
+    vlans.push(gr.vlan)
+    prCpu.push(gr.sumCpu)
+    prDisk.push(gr.sumDisk)
+  })
+  axios.post(import.meta.env.VITE_APP_BACKEND_IP + "/vmachines/doInvoice", {vlans: vlans, prCpu: prCpu, prDisk: prDisk, token: window.$cookies.get("auth")})
+    .then((res) => {
+      if(res.data){
+        toast.add({ severity: 'success', summary: 'Saved!', detail: 'Invoice have been saved successfully.', life: 4000 });
+      }else{
+        toast.add({ severity: 'error', summary: 'Error!', detail: 'Error doing the invoice.', life: 4000 });
+      }
     })
-    dataTable24.value.forEach((row) => {
-      priceCpu24.value += row.cpus*row.cpu*price.value;
-    })
-    priceCpu22.value = Math.round((priceCpu22.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-    priceCpu23.value = Math.round((priceCpu23.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-    priceCpu24.value = Math.round((priceCpu24.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-  } */
-  /* const changePriceDisk = (price) => {
-    priceMaxDisk22.value = Math.round((sumMaxDisk22.value*price.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-    priceMaxDisk23.value = Math.round((sumMaxDisk23.value*price.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-    priceMaxDisk24.value = Math.round((sumMaxDisk24.value*price.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-  } */
+}
 
-  const updateData = () => {
-    /* const start = format(startDate.value, 'yyyy-MM-dd');
-    const end = format(endDate.value, 'yyyy-MM-dd'); */
+onMounted(() => {
+  getRights()
+})
 
-    console.log(priceCpu.value)
-
-    /* dataTable22.value.forEach((registre) => {
-      console.log(registre)
-    }) */
-
-    /* if(priceCpu.value != "" && priceMaxdisk.value != ""){
-      axios.get(import.meta.env.VUE_APP_BACKEND_IP + '/proxmox/getInit', {params: {start: start, end: end, priceCpu: priceCpu.value, priceDisk: priceMaxdisk.value}})
-        .then((res) => {
-          if(res.data.ok){
-            console.log(res.data)
-          }
-        })
-    } */
-
-  }
 </script>
 
 <template>
-  <div class="grid">
-    <!-- <div class="col-12 border-1 border-solid surface-border border-round bg-primary-500 text-white font-bold text-center text-6xl">
-      Proxmox
-    </div> -->
+  <div class="grid" v-if="!teacher">
     <!-- Selectors -->
-    <div class="col-12 grid bg-white border-round-xl justify-content-center">
-      <div class="col-3 grid">
+    <div class="col-12 grid bg-white border-round-xl justify-content-center gap-3">
+      <div class="col-2 grid">
+        <div class="col-12">Sprint</div>
+        <!-- <MultiSelect v-model="startDate" disabled class="col-12 w-full"/> -->
+        <Dropdown v-model="sprint" @change="changeSprintsDates" :options="sprints" optionLabel="name" placeholder="Select Sprint"
+            class="w-full md:w-20rem" />
+      </div>
+      <div class="col-2 grid">
         <div class="col-12">Start Date</div>
-        <Calendar @date-select="cahngeDate" v-model="startDate" dateFormat="yy-mm-dd" class="col-12 w-full"/>
+        <InputText v-model="startDate" disabled class="col-12 w-full"/>
       </div>
-      <div class="col-3 grid">
+      <div class="col-2 grid">
         <div class="col-12">End Date</div>
-        <Calendar @date-select="cahngeDate" v-model="endDate" dateFormat="yy-mm-dd" class="col-12 w-full"/>
+        <InputText v-model="endDate" disabled class="col-12 w-full"/>
       </div>
-      <div class="col-3 grid">
+      <div class="col-2 grid">
         <div class="col-12">CPU Price (<b>€</b> / <b>%</b> CPU)</div>
-        <InputNumber v-model="priceCpu" @input="updateData" :minFractionDigits="0" :maxFractionDigits="2" inputId="integeronly" class="col-12 w-full" />
+        <InputText v-model="priceCpu" disabled class="col-12 w-full" />
       </div>
-      <div class="col-3 grid">
+      <div class="col-2 grid">
         <div class="col-12">Disk Price (<b>€</b> / <b>GB</b>)</div>
-        <InputNumber v-model="priceMaxdisk" @input="updateData" :minFractionDigits="0" :maxFractionDigits="2" inputId="integeronly" class="col-12 w-full" />
+        <InputText v-model="priceDisk" disabled class="col-12 w-full" />
       </div>
     </div>
-    <!-- <div class="col-12 grid">
-      <div class="col-4 text-center text-2xl font-bold p-2 bg-primary-300 border-1 border-solid surface-border border-round">VLAN 22</div>
-      <div class="col-4 text-center text-2xl font-bold p-2 bg-primary-300 border-1 border-solid surface-border border-round">VLAN 23</div>
-      <div class="col-4 text-center text-2xl font-bold p-2 bg-primary-300 border-1 border-solid surface-border border-round">VLAN 24</div>
-    </div> -->
-    <!-- Taules -->
+    <!-- End selectors -->
+
+
+
     <div class="col-12 grid bg-white border-round-xl mt-3">
-      <div class="col-4 card p-0">
-        <div class="col-12">
-          <DataTable :value="dataTable22" paginator :rows="5" tableStyle="min-width: 10rem" class="p-datatable-header border-1 border-solid surface-border border-round">
-            <template #header>
-                <div class="flex flex-wrap align-items-center justify-content-between gap-2 p-2 bg-primary-300 border-1 border-solid surface-border border-round w-full">
-                    <span class="text-xl text-900 font-bold ">VLAN 22</span>
-                    <Button label="More" @click="visible22 = true" class="p-2"/>
-                </div>
-            </template>
+      <div class="col-12 card p-0">
+        <DataTable :value="dataTable" paginator :rows="8" tableStyle="min-width: 10rem" size="null" class="p-datatable-header border-1 border-solid surface-border border-round">
             <Column field="vmid" header="VMID" headerClass="bg-primary-100" sortable></Column>
             <Column field="hostname" header="Hostname" headerClass="bg-primary-100"></Column>
             <Column field="cpu" header="CPU" headerClass="bg-primary-100" sortable></Column>
             <Column field="cpus" header="CPUs" headerClass="bg-primary-100" sortable></Column>
             <Column field="maxdisk" header="MaxDisk" headerClass="bg-primary-100" sortable></Column>
+            <Column field="cpuPrice" header="€ CPU" headerClass="bg-primary-100" sortable></Column>
+            <Column field="diskPrice" header="€ Disk" headerClass="bg-primary-100" sortable></Column>
           </DataTable>
-          <Dialog v-model:visible="visible22" modal header="VLAN 22" :style="{ width: '70%' }" >
-            <DataTable :value="dataTable22" paginator :rows="10" tableStyle="min-width: 10rem" class="p-datatable-header border-1 border-solid surface-border border-round">
-                <Column field="vmid" header="VMID" headerClass="bg-primary-100" sortable></Column>
-                <Column field="hostname" header="Hostname" headerClass="bg-primary-100"></Column>
-                <Column field="cpu" header="CPU" headerClass="bg-primary-100" sortable></Column>
-                <Column field="cpus" header="CPUs" headerClass="bg-primary-100" sortable></Column>
-                <Column field="maxdisk" header="MaxDisk" headerClass="bg-primary-100" sortable></Column>
-                <Column field="cpuPrice" header="€ CPU" headerClass="bg-primary-100" sortable></Column>
-                <Column field="diskPrice" header="€ Disk" headerClass="bg-primary-100" sortable></Column>
-            </DataTable>
-          </Dialog>
-        </div>
         <div class="col-12 grid text-center">
-          <div class="col-6">Price CPU: <b>{{ priceCpu22 }}€</b></div>
-          <div class="col-6">Price Disk: <b>{{ priceMaxDisk22 }}€</b></div>
+          <div class="col-6">Price CPU: <b>{{ sumCpu }}€</b></div>
+          <div class="col-6">Price Disk: <b>{{ sumDisk }}€</b></div>
         </div>
       </div>
-      <Divider layout="vertical" class="m-0" />
-      <div class="col-4 card p-0">
-        <div class="col-12">
-          <DataTable :value="dataTable23" paginator :rows="5" tableStyle="min-width: 10rem" class="p-datatable-header border-1 border-solid surface-border border-round">
-            <template #header>
-                <div class="flex flex-wrap align-items-center justify-content-between gap-2 p-2 bg-primary-300 border-1 border-solid surface-border border-round w-full">
-                    <span class="text-xl text-900 font-bold ">VLAN 23</span>
-                    <Button label="More" @click="visible23 = true" class="p-2"/>
-                </div>
-            </template>
-            <Column field="vmid" header="VMID" headerClass="bg-primary-100" sortable></Column>
-            <Column field="hostname" header="Hostname" headerClass="bg-primary-100"></Column>
-            <Column field="cpu" header="CPU" headerClass="bg-primary-100" sortable></Column>
-            <Column field="cpus" header="CPUs" headerClass="bg-primary-100" sortable></Column>
-            <Column field="maxdisk" header="MaxDisk" headerClass="bg-primary-100" sortable></Column>
-          </DataTable>
-          <Dialog v-model:visible="visible23" modal header="VLAN 22" :style="{ width: '70%' }" >
-            <DataTable :value="dataTable23" paginator :rows="10" tableStyle="min-width: 10rem" class="p-datatable-header border-1 border-solid surface-border border-round">
-                <Column field="vmid" header="VMID" headerClass="bg-primary-100" sortable></Column>
-                <Column field="hostname" header="Hostname" headerClass="bg-primary-100"></Column>
-                <Column field="cpu" header="CPU" headerClass="bg-primary-100" sortable></Column>
-                <Column field="cpus" header="CPUs" headerClass="bg-primary-100" sortable></Column>
-                <Column field="maxdisk" header="MaxDisk" headerClass="bg-primary-100" sortable></Column>
-                <Column field="cpuPrice" header="€ CPU" headerClass="bg-primary-100" sortable></Column>
-                <Column field="diskPrice" header="€ Disk" headerClass="bg-primary-100" sortable></Column>
-            </DataTable>
-          </Dialog>
-        </div>
-        <div class="col-12 grid text-center">
-          <div class="col-6">Price CPU: <b>{{ priceCpu23 }}€</b></div>
-          <div class="col-6">Price Disk: <b>{{ priceMaxDisk23 }}€</b></div>
-        </div>
+      
+    </div>
+
+
+
+
+    <!-- Toast -->
+    <Toast/>
+  </div>
+
+
+  <!-- ==== TEACHER ===== -->
+  <div class="grid" v-else>
+    <!-- Selectors -->
+    <div class="col-12 grid bg-white border-round-xl justify-content-center align-items-center gap-3">
+      <div class="col-2 grid">
+        <div class="col-12">Sprint</div>
+        <!-- <MultiSelect v-model="startDate" disabled class="col-12 w-full"/> -->
+        <Dropdown v-model="sprint" @change="changeSprintsDates" :options="sprints" optionLabel="name" placeholder="Select Sprint"
+            class="w-full md:w-20rem" />
       </div>
-      <Divider layout="vertical" class="m-0" />
-      <div class="col-4 card p-0">
+      <div class="col-2 grid">
+        <div class="col-12">Start Date</div>
+        <InputText v-model="startDate" disabled class="col-12 w-full"/>
+      </div>
+      <div class="col-2 grid">
+        <div class="col-12">End Date</div>
+        <InputText v-model="endDate" disabled class="col-12 w-full"/>
+      </div>
+      <div class="col-2 grid">
+        <div class="col-12">CPU Price (<b>€</b> / <b>%</b> CPU)</div>
+        <InputText v-model="priceCpu" class="col-12 w-full" />
+      </div>
+      <div class="col-2 grid">
+        <div class="col-12">Disk Price (<b>€</b> / <b>GB</b>)</div>
+        <InputText v-model="priceDisk" class="col-12 w-full" />
+      </div>
+      <div class="col-2 grid gap-2 align-items-center justify-content-center">
+        <Button @click="savePrices" label="Save" icon="pi pi-upload" />
+        <Button @click="doInvoice" label="Invoice" icon="pi pi-send" />
+      </div>
+    </div>
+    <!-- End selectors -->
+    
+
+    <div class="col-12 grid bg-white border-round-xl mt-3">
+      <div v-for="groupData in groupsData" class="col-6 card p-0">
+
+
         <div class="col-12">
-          <DataTable :value="dataTable24" paginator :rows="5" tableStyle="min-width: 10rem" class="p-datatable-header border-1 border-solid surface-border border-round">
+          <DataTable :value="groupData.dataTable" paginator :rows="5" tableStyle="min-width: 10rem" class="p-datatable-header border-1 border-solid surface-border border-round">
             <template #header>
                 <div class="flex flex-wrap align-items-center justify-content-between gap-2 p-2 bg-primary-300 border-1 border-solid surface-border border-round w-full">
-                    <span class="text-xl text-900 font-bold ">VLAN 24</span>
-                    <Button label="More" @click="visible24 = true" class="p-2"/>
+                    <span class="text-xl text-900 font-bold ">VLAN {{ groupData.vlan }}</span>
                 </div>
             </template>
             <Column field="vmid" header="VMID" headerClass="bg-primary-100" sortable></Column>
@@ -344,90 +347,22 @@
             <Column field="cpu" header="CPU" headerClass="bg-primary-100" sortable></Column>
             <Column field="cpus" header="CPUs" headerClass="bg-primary-100" sortable></Column>
             <Column field="maxdisk" header="MaxDisk" headerClass="bg-primary-100" sortable></Column>
+            <Column field="cpuPrice" header="€ CPU" headerClass="bg-primary-100" sortable></Column>
+            <Column field="diskPrice" header="€ Disk" headerClass="bg-primary-100" sortable></Column>
           </DataTable>
-          <Dialog v-model:visible="visible24" modal header="VLAN 22" :style="{ width: '70%' }" >
-            <DataTable :value="dataTable24" paginator :rows="10" tableStyle="min-width: 10rem" class="p-datatable-header border-1 border-solid surface-border border-round">
-                <Column field="vmid" header="VMID" headerClass="bg-primary-100" sortable></Column>
-                <Column field="hostname" header="Hostname" headerClass="bg-primary-100"></Column>
-                <Column field="cpu" header="CPU" headerClass="bg-primary-100" sortable></Column>
-                <Column field="cpus" header="CPUs" headerClass="bg-primary-100" sortable></Column>
-                <Column field="maxdisk" header="MaxDisk" headerClass="bg-primary-100" sortable></Column>
-                <Column field="cpuPrice" header="€ CPU" headerClass="bg-primary-100" sortable></Column>
-                <Column field="diskPrice" header="€ Disk" headerClass="bg-primary-100" sortable></Column>
-            </DataTable>
-          </Dialog>
         </div>
         <div class="col-12 grid text-center">
-          <div class="col-6">Price CPU: <b>{{ priceCpu24 }}€</b></div>
-          <div class="col-6">Price Disk: <b>{{ priceMaxDisk24 }}€</b></div>
+          <div class="col-6">Price CPU: <b>{{ groupData.sumCpu }}€</b></div>
+          <div class="col-6">Price Disk: <b>{{ groupData.sumDisk }}€</b></div>
         </div>
+
+
+
       </div>
     </div>
 
-    <!-- Grafics CPU -->
-    
-    <!-- <div class="col-12 text-center font-bold text-2xl p-2 bg-primary-300 border-1 border-solid surface-border border-round">CPU Usage (%/day)</div>    
-      <div class="col-12 grid">
-        <div class="col-4 card">      
-          <div class="responsive border-1 border-solid surface-border border-round" style="height: 50vh; clientHeight: 40vh">
-            <v-chart class="chart" :option="optionChangeoverYears" @click="click" autoresize/>
-          </div>
-        </div>
-        <div class="col-4 card">      
-          <div class="responsive border-1 border-solid surface-border border-round" style="height: 50vh; clientHeight: 40vh">
-            <v-chart class="chart" :option="optionChangeoverYears" @click="click" autoresize/>
-          </div>
-        </div>
-        <div class="col-4 card">      
-          <div class="responsive border-1 border-solid surface-border border-round" style="height: 50vh; clientHeight: 40vh">
-            <v-chart class="chart" :option="optionChangeoverYears" @click="click" autoresize/>
-          </div>
-        </div>
-    </div> -->
-
-    <!-- Grafics CPUs -->
-    <!-- <div class="col-12 text-center font-bold text-2xl p-2 bg-primary-300 border-1 border-solid surface-border border-round">CPUs</div>
-    <div class="col-12 grid">
-      <div class="col-4 card">      
-        <div class="responsive border-1 border-solid surface-border border-round" style="height: 50vh; clientHeight: 40vh">
-          <v-chart class="chart" :option="optionCpus" @click="click" autoresize/>
-        </div>
-      </div>
-      <div class="col-4 card">      
-        <div class="responsive border-1 border-solid surface-border border-round" style="height: 50vh; clientHeight: 40vh">
-          <v-chart class="chart" :option="optionCpus" @click="click" autoresize/>
-        </div>
-      </div>
-      <div class="col-4 card">      
-        <div class="responsive border-1 border-solid surface-border border-round" style="height: 50vh; clientHeight: 40vh">
-          <v-chart class="chart" :option="optionCpus" @click="click" autoresize/>
-        </div>
-      </div>
-    </div> -->
-
-    <!-- Grafics MaxDisk -->
-    <!-- <div class="col-12 text-center font-bold text-2xl p-2 bg-primary-300 border-1 border-solid surface-border border-round">Disk Space</div>
-    <div class="col-12 grid">
-      <div class="col-4 card">      
-        <div class="responsive border-1 border-solid surface-border border-round" style="height: 50vh; clientHeight: 40vh">
-          <v-chart class="chart" :option="optionMaxDisk" @click="click" autoresize/>
-        </div>
-      </div>
-      <div class="col-4 card">      
-        <div class="responsive border-1 border-solid surface-border border-round" style="height: 50vh; clientHeight: 40vh">
-          <v-chart class="chart" :option="optionMaxDisk" @click="click" autoresize/>
-        </div>
-      </div>
-      <div class="col-4 card">      
-        <div class="responsive border-1 border-solid surface-border border-round" style="height: 50vh; clientHeight: 40vh">
-          <v-chart class="chart" :option="optionMaxDisk" @click="click" autoresize/>
-        </div>
-      </div>
-    </div> -->
-
-    <Dialog v-model:visible="charging" header="Loading..." modal :closable="false">
-      <ProgressSpinner />
-    </Dialog>
+    <!-- Toast -->
+    <Toast/>
   </div>
-  
+
 </template>

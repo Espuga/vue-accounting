@@ -38,8 +38,10 @@ watch(() => admin.data.value, changeAdmin);
 const visible = ref(false)
 const groupName = ref("")
 const startAmount = ref(null)
+const vlan = ref("")
   // New group invalid
 const invalidGroupName = ref(false)
+const invalidGroupVlan = ref(false)
 
 // CHANGE MEMBERS DIALOG
 const changeVisible = ref(false)
@@ -66,23 +68,30 @@ const sprints = ref(null)
 // CHANGE App.vue GROUP VALUE 
 const changeGroup = async () => {
   selectedGroup.updateGroup(group.value)
-  selectedGroup.updateChart(group.value.id)
+  // selectedGroup.updateChart(group.value.id)
   await admin.updateAdmin(group.value.id)
   // console.log(admin.data.value)
 }
 
 // CREATE NEW GROUP
 const createGroup = () => {
-  if(groupName.value.length < 4) {
-    invalidGroupName.value = true
+  if(groupName.value.length < 4 || vlan.value.length == 0) {
+    if(groupName.value.length < 4) {
+      invalidGroupName.value = true
+    }
+    if(vlan.value.length == 0) {
+      invalidGroupVlan.value = true
+    }
     toast.add({ severity: 'error', summary: 'Invalid Group Name!', detail: 'The group name should have at least 4 characters.', life: 4000 });
   }else{
     invalidGroupName.value = false
+      invalidGroupVlan.value = false
     let newGroupData = { 
       token: window.$cookies.get("auth"), 
       name: groupName.value, 
       amount: startAmount.value,  
-      users: users.value
+      users: users.value,
+      vlan: vlan.value
     }
     loading.value = true;
     axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/settings/createGroup', newGroupData )
@@ -286,7 +295,6 @@ onMounted(() => {
   group.value = selectedGroup.data.value
   isAdmin.value = admin.data.value
   getRights()
-  
 })
 
 </script>
@@ -513,6 +521,12 @@ onMounted(() => {
                     <span class="col-5 p-float-label">
                       <InputNumber v-model="startAmount" class="w-full" :minFractionDigits="0" :maxFractionDigits="2" mode="currency" currency="EUR" locale="de-DE" />
                       <label class="pl-2" for="startAmount">Starting Amount</label>
+                    </span>
+                  </div>
+                  <div class="card flex">
+                    <span class="col-7 p-float-label">
+                      <InputText v-model="vlan" class="w-full" :class="{'p-invalid': invalidGroupVlan}" />
+                      <label class="pl-2" for="groupName">Vlan</label>
                     </span>
                   </div>
                   <div class="card flex mt-2">
