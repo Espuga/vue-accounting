@@ -1,12 +1,11 @@
 <script setup>
-import { ref, onMounted, inject } from 'vue'
+import { ref, onMounted, inject, watch } from 'vue'
 import axios from 'axios'
 
 const machines = ref()
 const group = inject('selectedGroup')
 
-onMounted(() => {
-  // console.log(group.data.value.id)
+const getNMachines = () => {
   axios.get(import.meta.env.VITE_APP_BACKEND_IP + "/vmachines/getNMachines", {params: {groupId: group.data.value.id}})
     .then((res) => {
       if(res.data.ok){
@@ -15,7 +14,13 @@ onMounted(() => {
 
       }
     })
+}
+
+onMounted(() => {
+  getNMachines()
 })
+
+watch(() => group.data.value, getNMachines);
 
 </script>
 

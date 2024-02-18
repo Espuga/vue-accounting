@@ -1,6 +1,8 @@
 <script setup>
 // =============================
 //          Import
+import { onMounted } from 'vue';
+
 import accountingCard from './../components/accountingCard.vue'
 import vmachinesCard from './../components/vmachinesCard.vue'
 
@@ -10,6 +12,11 @@ import vmachinesCard from './../components/vmachinesCard.vue'
 
 // =============================
 //          Functions
+
+onMounted(() => {
+  document.title = "Home"
+})
+
 
 </script>
 

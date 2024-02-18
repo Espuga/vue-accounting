@@ -234,6 +234,7 @@ const doInvoice = () => {
 }
 
 onMounted(() => {
+  document.title = "VMachines"
   getRights()
 })
 

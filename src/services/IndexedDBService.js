@@ -22,4 +22,7 @@ export default {
     const store = tx.objectStore('rights');
     return store.get(groupId);
   },
+  async deleteDatabase() {
+    await indexedDB.deleteDatabase('accounting')
+  }
 };

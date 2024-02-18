@@ -42,6 +42,8 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import ProgressSpinner from 'primevue/progressspinner';
 import Password from 'primevue/password';
 import Checkbox from 'primevue/checkbox';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
 
 
 import "primevue/resources/themes/lara-light-blue/theme.css";
@@ -73,6 +75,8 @@ app.component('ConfirmDialog', ConfirmDialog);
 app.component('ProgressSpinner', ProgressSpinner);
 app.component('Password', Password);
 app.component('Checkbox', Checkbox);
+app.component('IconField', IconField);
+app.component('InputIcon', InputIcon);
 
 
 app.use(PrimeVue)

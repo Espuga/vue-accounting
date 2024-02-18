@@ -1,9 +1,24 @@
 <script setup>
-import { inject } from "vue";
+import { inject, onMounted, ref, watch } from "vue";
+import axios from "axios"
 
-const money = inject('money')
+const money = ref()
 const group = inject('selectedGroup')
 
+const getMoney = () => {
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getHome', { params: { groupId: group.data.value.id } })
+    .then((res) => {
+      if(res.data.ok){
+        money.value = res.data.amount
+      }
+    })
+}
+
+onMounted(() => {
+  getMoney()
+})
+
+watch(() => group.data.value, getMoney);
 
 </script>
 

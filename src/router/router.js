@@ -28,6 +28,11 @@ const router = createRouter({
       meta: { title: 'VMachines' }
     },
     {
+      path: '/messages',
+      name: 'Messages',
+      component: () => import('@/views/messages.vue')
+    },
+    {
       path: '/prova',
       name: 'Prova',
       component: () => import('@/views/prova.vue')

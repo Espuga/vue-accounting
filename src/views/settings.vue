@@ -7,7 +7,7 @@ import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import IndexedDBService from './../services/IndexedDBService'
 
-// =============================
+// ============================= 
 //          Const
 
 // GLOBAL
@@ -24,7 +24,7 @@ const selectedGroup = inject('selectedGroup')
 // CHANGE SELECTED GROUP
 const changeSelectedGroup = () => {
   group.value = selectedGroup.data.value
-}
+} 
 watch(() => selectedGroup.data.value, changeSelectedGroup);
 const admin = inject('isAdmin')
 const isAdmin = ref(false)
@@ -65,13 +65,13 @@ const sprints = ref(null)
 //          Functions
 
 
-// CHANGE App.vue GROUP VALUE 
+/* // CHANGE App.vue GROUP VALUE 
 const changeGroup = async () => {
   selectedGroup.updateGroup(group.value)
   // selectedGroup.updateChart(group.value.id)
   await admin.updateAdmin(group.value.id)
   // console.log(admin.data.value)
-}
+} */
 
 // CREATE NEW GROUP
 const createGroup = () => {
@@ -291,7 +291,7 @@ const saveUserRights = () => {
 
 // ON MOUNTED
 onMounted(() => {
-  document.title = "Accounting - Settings"
+  document.title = "Settings"
   group.value = selectedGroup.data.value
   isAdmin.value = admin.data.value
   getRights()
@@ -313,13 +313,13 @@ onMounted(() => {
       <template #content>
         <div class="pl-8 pr-8">
           <!-- CHANGE GROUP -->
-          <div class="flex justify-content-between align-items-center">
+          <!-- <div class="flex justify-content-between align-items-center">
             <div class="flex align-items-center">
               <i class="pi pi-arrow-right-arrow-left" style="font-size: 1.3rem"></i>
               <span class="ml-2">Change group</span>
             </div>
             <Dropdown @change="changeGroup()" v-model="group" :options="groups.data" optionLabel="name" placeholder="Select a Group" class="w-full md:w-14rem" />
-          </div>
+          </div> -->
 
           
           <Divider/>
@@ -360,8 +360,8 @@ onMounted(() => {
                             <div class="flex flex-column sm:flex-row justify-content-between align-items-center flex-1 gap-4">
                               <div class="">{{ item.name }}</div>
                               <div class="flex align-items-center sm:align-items-end gap-3 sm:gap-2">
-                                <Button v-if="isAdmin" icon="pi pi-book p-0" @click="openChangeRights(item.id, item.name)" rounded label="Rights"></Button>
-                                <Button v-if="isAdmin" icon="pi pi-times p-0" @click="confirmQuitUser(item.id)" rounded :disabled="item.id===group.admin_id"></Button>
+                                <Button v-if="isAdmin || teacher" icon="pi pi-book p-0" @click="openChangeRights(item.id, item.name)" rounded label="Rights"></Button>
+                                <Button v-if="isAdmin || teacher" icon="pi pi-times p-0" @click="confirmQuitUser(item.id)" rounded :disabled="item.id===group.admin_id"></Button>
                                 
                                 <!-- USER RIGHTS DIALOG -->
                                 <Dialog v-model:visible="userRightsVisible" modal :closable="false" :style="{ width: '35rem', maxHeight: '70vh' }" 
@@ -403,7 +403,7 @@ onMounted(() => {
                 <!-- FOOTER DIALOG NEW GROUP -->
                 <template #footer>
                   <!-- ADD MEMBER -->
-                  <div v-if="isAdmin" class="card flex align-items-center mt-2">
+                  <div v-if="isAdmin || teacher" class="card flex align-items-center mt-2">
                     <span class="col-9 p-float-label">
                       <InputText v-model="users" class="w-full" placeholder="marc, lluc..." />
                       <label class="pl-2" for="users">Username</label>
@@ -418,7 +418,7 @@ onMounted(() => {
               </div> 
             </div><!-- fi change members -->
             <!-- DELETE GROUP -->
-            <div v-if="isAdmin" class="ml-6 mt-4">
+            <div v-if="isAdmin || teacher" class="ml-6 mt-4">
               <div class="flex justify-content-between align-items-center">
                 <div class="flex align-items-center">
                   <i class="pi pi-trash" style="font-size: 2rem"></i>

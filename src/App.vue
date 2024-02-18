@@ -1,12 +1,14 @@
 <script setup>
 // =============================
 //          Import
-import { ref, onMounted, provide, inject } from "vue";
+import { ref, onMounted, provide } from "vue";
 import { useToast } from "primevue/usetoast";
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 
 import IndexedDBService from './services/IndexedDBService'
+import transactionComponent from "./components/transactionComponent.vue";
+import MessagesComponent from "./components/messagesComponent.vue";
 
 
 // =============================
@@ -28,7 +30,6 @@ const menuItems = ref([
         }
       }
     ]
-    
   },
   {
     label: 'Home',
@@ -50,11 +51,6 @@ const menuItems = ref([
         command: () => {
           transactionDialog.value = true
         }
-      },
-      {
-        label: 'Settings',
-        icon: 'pi pi-cog',
-        route: '/accounting/settings'
       }
     ]
   },
@@ -63,6 +59,29 @@ const menuItems = ref([
     icon: 'pi pi-desktop',
     route: '/vmachines'
   },
+  {
+    label: 'Messages',
+    icon: 'pi pi-telegram',
+    items: [
+    {
+        label: 'Messages',
+        icon: 'pi pi-database',
+        route: '/messages'
+      },
+      {
+        label: 'Send Message',
+        icon: 'pi pi-send',
+        command: () => {
+          messageDialog.value = true;
+        }
+      },
+    ]
+  },
+  {
+    label: 'Settings',
+    icon: 'pi pi-cog',
+    route: '/accounting/settings'
+  }
 ]);
 
 // Loggin
@@ -72,19 +91,15 @@ provide('user', user);
 const loginDialog = ref(false);
 const username = ref("")
 const password = ref("")
+
+// Groups
 const group = ref({name: "", id: 0})
-provide('selectedGroup', {
-  data: group,
-  updateGroup(newGroup) {
-    group.value = newGroup;
-    getHome()
-  }
-}); 
-const groups = ref([])
-// provide('groups', groups);
+provide('selectedGroup', { data: group }); 
+const groups = ref([]) 
 provide('groups', {
   data: groups,
   updateGroups(){
+    // Update groups where new user is created
     axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getGroups', { params: { token: window.$cookies.get("auth") } })
       .then((res) => {
         groups.value = res.data.groups
@@ -93,6 +108,8 @@ provide('groups', {
       })
   }
 });
+
+// User Rights
 const admin = ref(false)
 provide('isAdmin', {
   data: admin,
@@ -109,34 +126,43 @@ const accountName = ref(null)
 const accountUsername = ref(null)
 const accountPassword1 = ref(null)
 const accountPassword2 = ref(null)
-  // Create Account invalid
+// Create Account invalid
 const invalidAccountUsername = ref(false)
 const invalidAccountPassword = ref(false)
 
-// Accounting Money
-const money = ref(0)
-provide('money', money)
-
-// Dialog
-const transactionDialog = ref(false);
-const dialogSelected = ref('Add Funds');
-const dialogOptions = ref(['Add Funds', 'Withdraw Funds']);
-
 // Transaction
-const fundsAmount = ref()
-const fundsTitle = ref("")
-const fundsDescription = ref("")
-const fundsChecked = ref(false)
-const currentDate = new Date()
-const formatDate = ref(currentDate.getFullYear()+"-"+(parseInt(currentDate.getMonth())+1)+"-"+currentDate.getDate())
-const fundsDate = ref(formatDate)
-const titleInvalid = ref(false)
-const amountInvalid = ref(false)
-const descriptionInvalid = ref(false)
+const transactionDialog = ref(false)
+provide('transactionDialog', {
+  data: transactionDialog.value,
+  update()  {
+    transactionDialog.value = false
+  }
+})
 
 // loading
 const loading = ref(false)
+provide('loading', {
+  data: loading.value,
+  load(val) {
+    loading.value = val
+  },
+})
+// toast
+provide('toast', {
+  data: null,
+  toast(severity, summary, detail) {
+    toast.add({ severity: severity, summary: summary, detail: detail, life: 4000 });
+  }
+})
 
+// Send Message
+const messageDialog = ref(false)
+provide('messageDialog', {
+  data: messageDialog.value,
+  update()  {
+    messageDialog.value = false
+  }
+})
 
 // =============================
 //          Functions
@@ -146,64 +172,14 @@ const deleteCookie = (cookieName) => {
   document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 };
 
-// CLOSE TRANSACTION DATA DIALOG
-const closeTransactionDialog = () => {
-  transactionDialog.value = false;
-  const currentRoute = router.currentRoute.value;
-  router.push({ path: currentRoute.path });  
-}
-
 // CLOSE CREATE ACCOUNT DIALOG
 const closeCreateAccountDialog = () => {
   createAccountDialog.value = false
 }
 
-// SUBMIT TRANSACTION DATA
-const submitTransaction = () => {
-  if(fundsAmount.value == 0 || fundsAmount.value == null || fundsTitle.value == "" || fundsDescription.value == ""){
-    // If some field is empty, WARNING!
-    toast.add({ severity: 'warn', summary: 'Warning!', detail: 'Fill all gaps.', life: 4000 });
-    amountInvalid.value = fundsAmount.value == 0 || fundsAmount.value == null || fundsAmount.value == undefined ? true : false;
-    titleInvalid.value = fundsTitle.value == "" ? true : false;
-    descriptionInvalid.value = fundsDescription.value == "" ? true : false;
-  }else{
-    let date = new Date(fundsDate.value)
-    let formatDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-    let object = {title: fundsTitle.value, description: fundsDescription.value, amount: fundsAmount.value, date: formatDate,
-                  groupId: group.value.id, token: window.$cookies.get('auth')};
-    if(dialogSelected.value!='Add Funds'){
-      object.amount = object.amount*-1
-    }
-    loading.value = true
-    axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/setTransaction', object)
-      .then((res) => {
-        loading.value = false
-        if(res.data.ok){
-          // Put 0 / null all fields
-          fundsAmount.value = null
-          fundsTitle.value = ""
-          fundsDescription.value = ""
-          // Success toast
-          toast.add({ severity: 'success', summary: 'Transaction Correctly!', detail: 'The transaction was saved correctly.', life: 4000 });
-          // Close Dialog
-          transactionDialog.value = false;
-          window.location.reload()
-        }else{
-          toast.add({ severity: 'error', summary: 'Transaction Error!', detail: 'The transaction couldn\'t be completed.', life: 4000 });
-        }
-      })
-  }
-}
-
-// RESET TRANSACTION DATE (CURRENT DATE)
-const changeChecked = () => {
-  if(fundsChecked.value == false){
-    formatDate.value = currentDate.getFullYear()+"-"+(parseInt(currentDate.getMonth())+1)+"-"+currentDate.getDate()
-  }
-}
-
 // GET USER RIGHTS
-const getRights = async (groupId) => {
+const getRights = async (groupId = group.value.id) => {
+  // get admin rights
   let rights = await IndexedDBService.obtenerDatos(groupId)
   if(rights != undefined){
     if(rights.rights.includes(1, 0)) {
@@ -214,6 +190,7 @@ const getRights = async (groupId) => {
   } else {
     admin.value = false
   } 
+  // get teacher rgihts
   rights = await IndexedDBService.obtenerDatos(0)
   if(rights != undefined){
     if(rights.rights.includes(2, 0)) {
@@ -225,17 +202,6 @@ const getRights = async (groupId) => {
     teacher.value = false
   }
 }
-
-/* const hash = async (string) => {
-  const utf8 = new TextEncoder().encode(string);
-  return crypto.subtle.digest('SHA-256', utf8).then((hashBuffer) => {
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray
-      .map((bytes) => bytes.toString(16).padStart(2, '0'))
-      .join('');
-    return hashHex;
-  });
-} */
 
 // SEND LOGIN FUNCTION
 const login = async () => {
@@ -265,7 +231,6 @@ const login = async () => {
               groups.value = res.data.groups
               group.value = res.data.groups[0]
               getRights(group.value.id)
-              getHome()
             })
         }else{
           toast.add({ severity: 'error', summary: 'Incorrect credentials!', detail: 'Username or password incorrect.', life: 4000 });
@@ -286,10 +251,13 @@ const openCreateAccount = () => {
 // CREATE ACCOUNT
 const submitCreateAccount = () => {
   if(accountPassword1.value == accountPassword2.value){
+    // If the passwords match
     if(accountPassword1.value.length < 4){
+      // Invalid password, les than 4 characters
       invalidAccountPassword.value = true
       toast.add({ severity: 'error', summary: 'Invalid password!', detail: 'The password should have at least 4 characters.', life: 4000 });
     }else{
+      // If valid password
       invalidAccountPassword.value = false
       loading.value = true;
       let object = {username: accountUsername.value, name: accountName.value, password: accountPassword1.value}
@@ -318,34 +286,26 @@ const submitCreateAccount = () => {
         })
     }
   }else{
+    // If the passwords doesn't match
     invalidAccountPassword.value = true
     toast.add({ severity: 'warn', summary: 'Passwords do not match!', detail: 'Put the same password.', life: 4000 });
   }
 }
 
-const getHome = () => {
-  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getHome', { params: { groupId: group.value.id } })
-    .then((res) => {
-      if(res.data.ok){
-        money.value = res.data.amount
-      }
-    })
-}
-
-const openLogOut = () => {
+// Log out
+const openLogOut = async () => {
   deleteCookie('auth')
+  await IndexedDBService.deleteDatabase()
   window.location.href = '/';
-  // router.replace({ path: '/' });  
 }
 
-/* const currentRoute = router.currentRoute.value;
-  router.push({ path: currentRoute.path });  */
 
 // ON MOUNTED
 onMounted(() => {
   // deleteCookie('auth')
   document.title = "Accounting"
   if(window.$cookies.isKey("auth")) {
+    // If there is the cookie
     loading.value = true
     logged.value = true
     axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/auth/getUsername', { params: { token: window.$cookies.get("auth") } })
@@ -358,9 +318,9 @@ onMounted(() => {
         groups.value = res.data.groups
         group.value = res.data.groups[0]
         getRights(group.value.id)
-        getHome()
       })
   }else{
+    // There isn't the cookie, log in
     loginDialog.value = true
   }
 })
@@ -388,9 +348,16 @@ onMounted(() => {
         </template>
         <template #end>
           <Button v-if="logged == false" icon="pi pi-user" label="Login" @click="loginDialog = true" />
-          <div v-else class="grid align-items-center mr-4">
-            <i class="pi pi-user mr-2" style="font-size: 1.2rem"></i>
-            <p><b>{{ user }}</b></p>
+          <div v-else class="flex gap-5">
+
+            <div class="grid justify-content-between align-items-center">
+              <Dropdown @change="getRights()" v-model="group" :options="groups" optionLabel="name" placeholder="Select a Group" class="w-full " />
+            </div>
+
+            <div class="grid align-items-center mr-4">
+              <i class="pi pi-user mr-2" style="font-size: 1.2rem"></i>
+              <p><b>{{ user }}</b></p>
+            </div>
           </div>
         </template>
       </Menubar>
@@ -414,7 +381,7 @@ onMounted(() => {
             </div>
             <div class="inline-flex flex-column gap-2">
               <label for="password" class="text-primary-50 font-semibold">Password</label>
-              <InputText v-model="password" id="password" class="bg-white-alpha-20 border-none p-3 text-primary-50" type="password"></InputText>
+              <InputText v-model="password" @keyup.enter="login()" id="password" class="bg-white-alpha-20 border-none p-3 text-primary-50" type="password"></InputText>
             </div>
             <div class="flex w-full justify-content-end m-0">
               <a href="#" @click.prevent="openCreateAccount" class="no-underline"><p class="m-0 text-50 underline">Create Account</p></a>
@@ -475,58 +442,9 @@ onMounted(() => {
     </Dialog>
 
     <!-- DIALOG TRANSACTION -->
-    <Dialog v-model:visible="transactionDialog" modal :closable="false" :style="{ width: '50rem' }" 
-      :breakpoints="{ '1199px': '75vw', '575px': '90vw' } ">
-      <!-- HEADER -->
-      <template #header>
-        <div class="flex align-items-center">
-          <i class="pi pi-chart-line" style="font-size: 1.5rem"></i>
-          <b class="text-2xl ml-2">Transaction</b>
-        </div>
-      </template>
-      <!-- MAIN CONTENT -->
-      <div class="card flex justify-content-center mt-1">
-        <SelectButton v-model="dialogSelected" :options="dialogOptions" aria-labelledby="basic" />
-      </div>
+    <transactionComponent v-if="transactionDialog"></transactionComponent>
 
-      <div class="mt-4">
-        <div class="card flex">
-          <span class="col-7 p-float-label">
-            <InputText :class="{ 'p-invalid': titleInvalid }" v-model="fundsTitle" class="w-full" />
-            <label class="pl-2" for="title">Title</label>
-          </span>
-          <span class="col-4 p-float-label">
-            <InputNumber :class="{'p-invalid': amountInvalid}" v-model="fundsAmount" :minFractionDigits="0" :maxFractionDigits="2" mode="currency" currency="EUR" locale="de-DE" 
-              class="w-full" />
-            <label for="amount" 
-              :class="['pl-2 flex align-items-center', dialogSelected === 'Add Funds' ? 'text-green-400' : 'text-red-400']">
-              <i class="pi pi-euro mr-2" style="font-size: 1rem"></i>
-              Amount
-            </label>
-          </span>
-        </div>
-        <div class="card flex ml-2 mr-5 mt-4">
-          <span class="p-float-label w-full">
-            <Textarea :class="{ 'p-invalid': descriptionInvalid }" v-model="fundsDescription" autoResize rows="5" cols="30" class="w-full" />
-            <label for="description">Description</label>
-          </span>
-        </div>
-        <div class="card flex ml-2 mr-5 mt-4 justify-content-right align-items-center">
-          <label for="changeDate" class="flex align-items-center"><i class="pi pi-calendar" style="font-size: 1.5rem"></i>Change date</label>
-          <InputSwitch v-model="fundsChecked" @change="changeChecked" class="ml-2" />
-        </div>
-        <div v-if="fundsChecked==true" class="card flex ml-2 mr-5 mt-2 justify-content-right">
-          <Calendar v-model="fundsDate" dateFormat="yy-mm-dd" />
-        </div >
-      </div>
-      <!-- FOOTER -->
-      <template #footer>
-        <div class="flex justify-content-center">
-          <Button label="Cancel" icon="pi pi-times" @click="closeTransactionDialog" class="surface-300 border-400 text-black-alpha-90"/>
-          <Button label="Submit" icon="pi pi-upload" @click="submitTransaction" :class="[dialogSelected=='Add Funds' ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600']"/>
-        </div>
-      </template>
-    </Dialog>
+    <MessagesComponent v-if="messageDialog"></MessagesComponent>
 
     <!-- ROUTER VIEW -->
     <RouterView v-if="logged" class="m-4"></RouterView>
