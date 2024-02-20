@@ -60,6 +60,10 @@ const userIdRights = ref()
 const visibleSprintPeriods = ref(false)
 const sprints = ref(null)
 
+// CHANGE TELEGRAM CHAT ID
+const visibleChangeTelegram = ref(false)
+const chatId = ref(null)
+
 
 // =============================
 //          Functions
@@ -289,6 +293,36 @@ const saveUserRights = () => {
     })
 }
 
+const getChatId = () => {
+  if(chatId.value == null) {
+    axios.get(import.meta.env.VITE_APP_BACKEND_IP+"/settings/getChatId")
+      .then((res) => {
+        if(res.data.ok) {
+          console.log(res.data.chatId)
+          chatId.value = res.data.chatId
+        }else {
+          toast.add({ severity: 'error', summary: 'Error!', detail: 'Error getting the Chat ID.', life: 3000 });
+        }
+      })
+  }
+}
+
+const saveChatId = () => {
+  if(chatId.value != null && chatId.value != ""){
+    axios.post(import.meta.env.VITE_APP_BACKEND_IP+"/settings/saveChatId", chatId.value)
+      .then((res) => {
+        if(res.data) {
+          toast.add({ severity: 'success', summary: 'Saved!', detail: 'Chat ID saved successfully.', life: 3000 });
+        }else {
+          toast.add({ severity: 'error', summary: 'Error!', detail: 'Error saving the Chat ID.', life: 3000 });
+        }
+      })
+      .catch((err) => {
+        console.error(err)
+      })
+  }
+}
+
 // ON MOUNTED
 onMounted(() => {
   document.title = "Settings"
@@ -434,7 +468,7 @@ onMounted(() => {
           <Divider/>
 
 
-          <!-- GROUP SETTINGS -->
+          <!-- GLOBAL SETTINGS -->
           <div v-if="teacher" id="groupSettings">
             <div class="flex align-items-center">
                 <h3>Global Settings</h3>
@@ -496,7 +530,7 @@ onMounted(() => {
             <!-- NEW GROUP -->
             <div class="ml-6 flex justify-content-between align-items-center mt-4">
               <div class="flex align-items-center">
-                <i class="pi pi-plus-circle" style="font-size: 1.3rem"></i>
+                <i class="pi pi-plus-circle" style="font-size: 2rem"></i>
                 <span class="ml-2">New group</span>
               </div>
               <Button @click="visible=true" label="Create" />
@@ -545,7 +579,47 @@ onMounted(() => {
                 </template>
               </Dialog>
             </div><!-- FI NEW GROUP -->
-          </div> <!-- FI GROUP SETTINGS -->
+
+
+
+            <!-- NEW GROUP -->
+            <div class="ml-6 flex justify-content-between align-items-center mt-4">
+              <div class="flex align-items-center">
+                <i class="pi pi-telegram" style="font-size: 2rem"></i>
+                <span class="ml-2">Change Telegram Chat ID</span>
+              </div>
+              <Button @click="visibleChangeTelegram=true; getChatId();" label="Change" />
+              <!-- DIALOG NEW GROUP -->
+              <Dialog v-model:visible="visibleChangeTelegram" modal :closable="false" :style="{ width: '30rem' }" 
+                :breakpoints="{ '1199px': '75vw', '575px': '90vw' } ">
+                <!-- HEADER DIALOG NEW GROUP -->
+                <template #header>
+                  <div class="flex align-items-center">
+                    <i class="pi pi-telegram" style="font-size: 1.5rem"></i>
+                    <b class="text-2xl ml-2">Change Telegram Chat ID</b>
+                  </div>
+                </template>
+                <!-- CONTENT DIALOG NEW GROUP -->
+                <div class="mt-4">
+                  <!-- GROUP NAME & STRATING AMOUNT -->
+                  <span class="col-12 p-float-label">
+                    <InputText v-model="chatId" class="w-full" />
+                    <label class="pl-2" for="chatId">Chat ID</label>
+                  </span>
+                </div>
+                <!-- FOOTER DIALOG NEW GROUP -->
+                <template #footer>
+                  <div class="flex justify-content-center w-full gap-3">
+                    <Button label="Cancel" icon="pi pi-times" @click="visibleChangeTelegram = false" class="surface-300 border-400 text-black-alpha-90"/>
+                    <Button label="Submit" icon="pi pi-upload" @click="saveChatId()" class="bg-green-500 border-green-600"/>
+                  </div>
+                </template>
+              </Dialog>
+            </div><!-- FI NEW GROUP -->
+
+
+
+          </div> <!-- FI GLOBAL SETTINGS -->
 
 
 

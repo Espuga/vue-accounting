@@ -9,7 +9,7 @@ const getMoney = () => {
   axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getHome', { params: { groupId: group.data.value.id } })
     .then((res) => {
       if(res.data.ok){
-        money.value = res.data.amount
+        money.value = res.data.amount.toFixed(2)
       }
     })
 }
