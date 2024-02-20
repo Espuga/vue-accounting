@@ -40,10 +40,15 @@ const menuItems = ref([
     label: 'Accounting',
     icon: 'pi pi-chart-line',
     items: [
-    {
+      {
         label: 'Dashboard',
         icon: 'pi pi-chart-bar',
         route: '/accounting/dashboard'
+      },
+      {
+        label: 'Authorize',
+        icon: 'pi pi-check-circle',
+        route: '/accounting/authorize'
       },
       {
         label: 'New Transaction',

@@ -33,6 +33,11 @@ const router = createRouter({
       component: () => import('@/views/messages.vue')
     },
     {
+      path: '/accounting/authorize',
+      name: 'Authorize',
+      component: () => import('@/views/authorize.vue')
+    },
+    {
       path: '/prova',
       name: 'Prova',
       component: () => import('@/views/prova.vue')
