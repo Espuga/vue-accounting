@@ -6,7 +6,7 @@ const machines = ref()
 const group = inject('selectedGroup')
 
 const getNMachines = () => {
-  axios.get(import.meta.env.VITE_APP_BACKEND_IP + "/vmachines/getNMachines", {params: {groupId: group.data.value.id}})
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + "/home/getNMachines", {params: {groupId: group.data.value.id}})
     .then((res) => {
       if(res.data.ok){
         machines.value = res.data.num

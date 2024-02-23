@@ -38,6 +38,11 @@ const router = createRouter({
       component: () => import('@/views/authorize.vue')
     },
     {
+      path: '/projects',
+      name: 'Projects',
+      component: () => import('@/views/projects.vue')
+    },
+    {
       path: '/prova',
       name: 'Prova',
       component: () => import('@/views/prova.vue')

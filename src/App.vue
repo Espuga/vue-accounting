@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router';
 import IndexedDBService from './services/IndexedDBService'
 import transactionComponent from "./components/transactionComponent.vue";
 import MessagesComponent from "./components/messagesComponent.vue";
+import projectComponent from "./components/projectComponent.vue";
 
 
 // =============================
@@ -60,8 +61,26 @@ const menuItems = ref([
     ]
   },
   {
+    label: 'Projects',
+    icon: 'pi pi-database',
+    items: [
+      {
+        label: 'Projects',
+        icon: 'pi pi-book',
+        route: '/projects'
+      },
+      {
+        label: 'New Project',
+        icon: 'pi pi-plus',
+        command: () => {
+          projectDialog.value = true
+        }
+      }
+    ]
+  },
+  {
     label: 'VMachines',
-    icon: 'pi pi-desktop',
+    icon: 'pi pi-server',
     route: '/vmachines'
   },
   {
@@ -141,6 +160,15 @@ provide('transactionDialog', {
   data: transactionDialog.value,
   update()  {
     transactionDialog.value = false
+  }
+})
+
+// Project
+const projectDialog = ref(false)
+provide('projectDialog', {
+  data: projectDialog.value,
+  update()  {
+    projectDialog.value = false
   }
 })
 
@@ -356,7 +384,8 @@ onMounted(() => {
           <div v-else class="flex gap-5">
 
             <div class="grid justify-content-between align-items-center">
-              <Dropdown @change="getRights()" v-model="group" :options="groups" optionLabel="name" placeholder="Select a Group" class="w-full " />
+              <Dropdown @change="getRights(); toast.add({ severity: 'info', summary: 'Group changed!', detail: '', life: 2000 });" 
+              v-model="group" :options="groups" optionLabel="name" placeholder="Select a Group" class="w-full " />
             </div>
 
             <div class="grid align-items-center mr-4">
@@ -450,6 +479,8 @@ onMounted(() => {
     <transactionComponent v-if="transactionDialog"></transactionComponent>
 
     <MessagesComponent v-if="messageDialog"></MessagesComponent>
+
+    <projectComponent v-if="projectDialog"></projectComponent>
 
     <!-- ROUTER VIEW -->
     <RouterView v-if="logged" class="m-4"></RouterView>

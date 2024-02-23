@@ -44,6 +44,7 @@ import Password from 'primevue/password';
 import Checkbox from 'primevue/checkbox';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
+import OverlayPanel from 'primevue/overlaypanel';
 
 
 import "primevue/resources/themes/lara-light-blue/theme.css";
@@ -77,6 +78,7 @@ app.component('Password', Password);
 app.component('Checkbox', Checkbox);
 app.component('IconField', IconField);
 app.component('InputIcon', InputIcon);
+app.component('OverlayPanel', OverlayPanel);
 
 
 app.use(PrimeVue)

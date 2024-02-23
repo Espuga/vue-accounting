@@ -16,6 +16,7 @@ import {
 import VChart from "vue-echarts";
 import axios from 'axios';
 import { FilterMatchMode } from 'primevue/api';
+import IndexedDBService from './../services/IndexedDBService'
 
 use([
   CanvasRenderer,
@@ -33,10 +34,14 @@ use([
 // GENERAL
 const toast = useToast();
 const selectedGroup = inject('selectedGroup')
+const teacher = ref(false)
 
 // GLOBAL
 const group = inject('selectedGroup')
 const sprints = ref(null)
+
+// GROUP
+const money = ref()
 
 // MAIN CHART
 const chartData = ref();
@@ -99,7 +104,7 @@ const getChart = () => {
           };
           dataDataTable.value = res.data.dataTable
           originalDataTable.value = res.data.dataTable
-
+          updateMoney()
         }
       })
 
@@ -176,12 +181,35 @@ const deleteTransaction = (id) => {
     })
 }
 
+const updateMoney = () => {
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/home/getHome', { params: { groupId: group.data.value.id } })
+    .then((res) => {
+      if(res.data.ok){
+        money.value = res.data.amount.toFixed(2)
+      }
+    })
+}
 
+const getRights = async () => {
+  let rights = await IndexedDBService.obtenerDatos(0)
+  if(rights != undefined){
+    if(rights.rights.includes(2, 0)) {
+      teacher.value = true
+      getChart()
+    } else {
+      teacher.value = false
+      getChart()
+    }
+  } else {
+    teacher.value = false
+    getChart()
+  }
+}
 
 // ON MOUNTED
 onMounted(() => {
   document.title = "Accounting - Dashboard"
-  getChart()
+  getRights()
   getSprints()
 })
 
@@ -211,9 +239,12 @@ const filters = ref({
             content: { class: 'bg-bluegray-50 border-round-bottom-3xl shadow-8' }
           }">
           <template #header>
-            <div class="flex align-items-center">
-              <i class="pi pi-chart-bar" style="font-size: 20px" />
-              <span class="text-lg ml-2"> Accounting {{ group.data.value.name }} </span>
+            <div class="flex w-full">
+              <div class="flex align-items-center">
+                <i class="pi pi-chart-bar" style="font-size: 20px" />
+                <span class="text-lg ml-2"> Accounting {{ group.data.value.name }} </span>
+              </div>
+              <div :class="{'ml-auto text-xl font-bold':true, 'text-green-500':money>=0, 'text-red-500':money<0 }">{{ money }} €</div>
             </div>
           </template>
           <!-- CHART -->
@@ -296,8 +327,8 @@ const filters = ref({
                 <Calendar v-model="data[field]" dateFormat="yy-mm-dd" />
               </template>
             </Column>
-            <Column :rowEditor="true" style="width: 3%" bodyStyle="text-align:center"></Column>
-            <Column style="width: 3%" bodyStyle="text-align:center">
+            <Column v-if="teacher" :rowEditor="true" style="width: 3%" bodyStyle="text-align:center"></Column>
+            <Column v-if="teacher" style="width: 3%" bodyStyle="text-align:center">
               <template #body="{ data }">
                 <a href="#" @click="deleteTransaction(data.id)">
                   <i class="pi pi-trash text-500" style="font-size: 20px" />

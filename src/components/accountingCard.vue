@@ -6,7 +6,7 @@ const money = ref()
 const group = inject('selectedGroup')
 
 const getMoney = () => {
-  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/accounting/getHome', { params: { groupId: group.data.value.id } })
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/home/getHome', { params: { groupId: group.data.value.id } })
     .then((res) => {
       if(res.data.ok){
         money.value = res.data.amount.toFixed(2)

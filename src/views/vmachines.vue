@@ -29,26 +29,6 @@ const sumCpu = ref()
 const sumDisk = ref()
 
 
-// Teacher
-const dataTable22 = ref();
-const priceCpu22 = ref(0)
-const sumMaxDisk22 = ref()
-const priceMaxDisk22 = ref()
-
-const dataTable23 = ref();
-const priceCpu23 = ref(0)
-const sumMaxDisk23 = ref()
-const priceMaxDisk23 = ref()
-
-const dataTable24 = ref();
-const priceCpu24 = ref(0)
-const sumMaxDisk24 = ref()
-const priceMaxDisk24 = ref()
-
-const visible22 = ref(false);
-const visible23 = ref(false);
-const visible24 = ref(false);
-
 const groupsData = ref()
 
 // =============================
@@ -74,6 +54,7 @@ const getSelectors = async () => {
             sprint.value = spr
             startDate.value = spr.start
             endDate.value = spr.end
+            getDataTable()
           }
         })
 
@@ -86,63 +67,17 @@ const getSelectors = async () => {
     })
 }
 
-const getInitTeacher = () => {
-  if(startDate.value == undefined){
-    toast.add({ severity: 'error', summary: 'Error!', detail: 'Error getting the data. Select a sprint.', life: 4000 });
-    return;
-  }
-  axios.get(import.meta.env.VITE_APP_BACKEND_IP + '/proxmox/getInit', {params: {start: startDate.value, end: endDate.value, priceCpu: priceCpu.value, priceDisk: priceDisk.value}})
-    .then(res => {
-      if(res.data.ok){
-        priceCpu22.value = 0
-        priceCpu23.value = 0
-        priceCpu24.value = 0
-        // Dades taula
-        dataTable22.value = res.data.tableVlan22;
-        dataTable23.value = res.data.tableVlan23;
-        dataTable24.value = res.data.tableVlan24;
-        // Suma cpu amb preu
-        dataTable22.value.forEach((row) => {
-          priceCpu22.value += row.cpus*row.cpu*parseFloat(priceCpu.value);
-        })
-        dataTable23.value.forEach((row) => {
-          priceCpu23.value += row.cpus*row.cpu*parseFloat(priceCpu.value);
-        })
-        dataTable24.value.forEach((row) => {
-          priceCpu24.value += row.cpus*row.cpu*parseFloat(priceCpu.value);
-        })
-        priceCpu22.value = Math.round((priceCpu22.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-        priceCpu23.value = Math.round((priceCpu23.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-        priceCpu24.value = Math.round((priceCpu24.value) * Math.pow(10, 2)) / Math.pow(10, 2);
-        // Suma MaxDisk sense preu
-        sumMaxDisk22.value = res.data.sumDisk22;
-        sumMaxDisk23.value = res.data.sumDisk23;
-        sumMaxDisk24.value = res.data.sumDisk24;
-        // Suma MaxDisk amb preu
-        priceMaxDisk22.value = Math.round((res.data.sumDisk22*parseFloat(priceDisk.value)) * Math.pow(10, 2)) / Math.pow(10, 2);
-        priceMaxDisk23.value = Math.round((res.data.sumDisk23*parseFloat(priceDisk.value)) * Math.pow(10, 2)) / Math.pow(10, 2);
-        priceMaxDisk24.value = Math.round((res.data.sumDisk24*parseFloat(priceDisk.value)) * Math.pow(10, 2)) / Math.pow(10, 2);
-      }
-    })
-}
-
 const changeSprintsDates = () => {
   sprints.value.forEach((spr) => {
     if(spr.name == sprint.value.name) {
       startDate.value = spr.start
       endDate.value = spr.end
       getDataTable()
-      // if(!teacher) {
-      //   getDataTable()
-      // }else{
-      //   getInitTeacher()
-      // }
     }
   })
 } 
 
 const getDataTable = () => {
-  // console.log(teacher.value)
   if(teacher.value) {
     let groupsId = ""
     groups.data.value.forEach((gr) => {
@@ -154,9 +89,6 @@ const getDataTable = () => {
       .then((res) => {
         if(res.data.ok) {
           groupsData.value = res.data.dades
-          /* res.data.dades.forEach((gr) => {
-            console.log(gr)
-          }) */
         }else {
           toast.add({ severity: 'error', summary: 'Error!', detail: 'Error getting the data. Try it again.', life: 4000 });
         }
@@ -223,7 +155,8 @@ const doInvoice = () => {
     prCpu.push(gr.sumCpu)
     prDisk.push(gr.sumDisk)
   })
-  axios.post(import.meta.env.VITE_APP_BACKEND_IP + "/vmachines/doInvoice", {vlans: vlans, prCpu: prCpu, prDisk: prDisk, token: window.$cookies.get("auth")})
+  axios.post(import.meta.env.VITE_APP_BACKEND_IP + "/vmachines/doInvoice", 
+  {vlans: vlans, prCpu: prCpu, prDisk: prDisk, token: window.$cookies.get("auth"), data: ""+endDate.value})
     .then((res) => {
       if(res.data){
         toast.add({ severity: 'success', summary: 'Saved!', detail: 'Invoice have been saved successfully.', life: 4000 });
