@@ -68,13 +68,12 @@ const submitTransaction = () => {
           fundsDescription.value = ""
           // Success toast
           toast.toast('success', 'Transaction Correctly!', 'The transaction was saved correctly.')
-          // toast.add({ severity: 'success', summary: 'Transaction Correctly!', detail: 'The transaction was saved correctly.', life: 4000 });
           // Close Dialog
           transactionDialog.value = false;
-          window.location.reload()
+          // console.log(res.data)
+          // window.location.reload()
         }else{
           toast.toast('error', 'Transaction Error!', 'The transaction couldn\'t be completed.')
-          // toast.add({ severity: 'error', summary: 'Transaction Error!', detail: 'The transaction couldn\'t be completed.', life: 4000 });
           console.error(res.data.msg)
         }
       })

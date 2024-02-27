@@ -150,6 +150,11 @@ const accountName = ref(null)
 const accountUsername = ref(null)
 const accountPassword1 = ref(null)
 const accountPassword2 = ref(null)
+const accountClass = ref({ name: "1st Course", code: 1})
+const optionAccountClass = ref([
+  { name: "1st Course", code: 1},
+  { name: "2nd Course", code: 1}
+])
 // Create Account invalid
 const invalidAccountUsername = ref(false)
 const invalidAccountPassword = ref(false)
@@ -293,7 +298,7 @@ const submitCreateAccount = () => {
       // If valid password
       invalidAccountPassword.value = false
       loading.value = true;
-      let object = {username: accountUsername.value, name: accountName.value, password: accountPassword1.value}
+      let object = {username: accountUsername.value, name: accountName.value, password: accountPassword1.value, course: accountClass.value.code}
       axios.post(import.meta.env.VITE_APP_BACKEND_IP + '/auth/createAccount', object, {
         headers: {
           'Content-Type': 'application/json'
@@ -447,6 +452,11 @@ onMounted(() => {
             <label class="pl-2 flex align-items-center" for="user"><i class="pi pi-user mr-1" style="font-size: 1rem"></i>Name</label>
           </div>
         </span>
+        <span class="col-12 flex justify-content-center w-full">
+          <div class="p-float-label">
+            <Dropdown v-model="accountClass" :options="optionAccountClass" optionLabel="name" placeholder="Select the Course" class="w-full md:w-14rem" />
+          </div>
+        </span>
         <span class="col-12 flex justify-content-center w-full mt-3">
           <div class="p-float-label">
             <InputText v-model="accountUsername" :class="{'p-invalid': invalidAccountUsername}" />
@@ -468,7 +478,7 @@ onMounted(() => {
       </div>
       <!-- FOOTER -->
       <template #footer>
-        <div class="flex justify-content-center">
+        <div class="flex justify-content-center w-full gap-3">
           <Button label="Cancel" icon="pi pi-times" @click="closeCreateAccountDialog" class="surface-300 border-400 text-black-alpha-90"/>
           <Button label="Submit" icon="pi pi-send" @click="submitCreateAccount" class="bg-green-500 border-green-600"/>
         </div>
