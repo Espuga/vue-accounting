@@ -338,7 +338,7 @@ watch(() => group.data.value, mountChart);
             <Column field="description" header="Description" style="width: 40%" ></Column>
             <Column field="data" header="Date" style="width: 10%" ></Column>
             <Column v-for="user of users" :field="user.username" :header="user.name"></Column>
-            <Column v-if="teacher" style="width: 3%" bodyStyle="text-align:center">
+            <Column style="width: 3%" bodyStyle="text-align:center">
               <template #body="{ data }">
                 <a href="#" @click="editProject(data)">
                   <i class="pi pi-pencil text-500" style="font-size: 20px" />

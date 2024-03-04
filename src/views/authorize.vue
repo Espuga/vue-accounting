@@ -81,6 +81,7 @@ const getRights = async () => {
     if(rights.rights.includes(2, 0)) {
       teacher.value = true
       getInit()
+      getInit2()
       // getInitTeacher()
     } else {
       teacher.value = false
@@ -154,7 +155,7 @@ onMounted(() => {
       </div><!-- FI TRANSACTIONS TO AUTHORIZE -->
 
       <!-- INICI TRANSACTIONS TO ACCEPT -->
-      <div v-else class="col-12">
+      <div class="col-12">
         <Panel header="Header" ref="cardGridFi" :collapsed="false" :pt="{
             header: { class: 'bg-bluegray-50 border-round-top-xl shadow-8' },
             content: { class: 'bg-bluegray-50 border-round-bottom-3xl shadow-8' }
