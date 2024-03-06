@@ -62,24 +62,22 @@ const sprints = ref(null)
 
 // CHANGE TELEGRAM CHAT ID
 const visibleChangeTelegram = ref(false)
+const visibleChangeTelegramAlert = ref(false)
 const chatId = ref(null)
+const alertChatId = ref(null)
 
 // CHANGE VLAN
 const visibleChangeVlan = ref(false)
+
+// Salary
+const visibleSalary = ref(false)
+const salary1 = ref()
+const salary2 = ref()
 
 
 
 // =============================
 //          Functions
-
-
-/* // CHANGE App.vue GROUP VALUE 
-const changeGroup = async () => {
-  selectedGroup.updateGroup(group.value)
-  // selectedGroup.updateChart(group.value.id)
-  await admin.updateAdmin(group.value.id)
-  // console.log(admin.data.value)
-} */
 
 // CREATE NEW GROUP
 const createGroup = () => {
@@ -302,7 +300,7 @@ const getChatId = () => {
     axios.get(import.meta.env.VITE_APP_BACKEND_IP+"/settings/getChatId")
       .then((res) => {
         if(res.data.ok) {
-          console.log(res.data.chatId)
+          // console.log(res.data.chatId)
           chatId.value = res.data.chatId
         }else {
           toast.add({ severity: 'error', summary: 'Error!', detail: 'Error getting the Chat ID.', life: 3000 });
@@ -317,6 +315,36 @@ const saveChatId = () => {
       .then((res) => {
         if(res.data) {
           toast.add({ severity: 'success', summary: 'Saved!', detail: 'Chat ID saved successfully.', life: 3000 });
+        }else {
+          toast.add({ severity: 'error', summary: 'Error!', detail: 'Error saving the Chat ID.', life: 3000 });
+        }
+      })
+      .catch((err) => {
+        console.error(err)
+      })
+  }
+}
+const getAlertChatId = () => {
+  if(alertChatId.value == null) {
+    axios.get(import.meta.env.VITE_APP_BACKEND_IP+"/settings/getAlertChatId")
+      .then((res) => {
+        if(res.data.ok) {
+          // console.log(res.data.chatId)
+          alertChatId.value = res.data.chatId
+        }else {
+          toast.add({ severity: 'error', summary: 'Error!', detail: 'Error getting the Chat ID.', life: 3000 });
+        }
+      })
+  }
+}
+
+const saveAlertChatId = () => {
+  if(alertChatId.value != null && alertChatId.value != ""){
+    axios.post(import.meta.env.VITE_APP_BACKEND_IP+"/settings/saveAlertChatId", alertChatId.value)
+      .then((res) => {
+        if(res.data) {
+          toast.add({ severity: 'success', summary: 'Saved!', detail: 'Chat ID saved successfully.', life: 3000 });
+          visibleChangeTelegramAlert.value = false
         }else {
           toast.add({ severity: 'error', summary: 'Error!', detail: 'Error saving the Chat ID.', life: 3000 });
         }
@@ -349,6 +377,24 @@ const saveVlan = () => {
         toast.add({ severity: 'error', summary: 'Error!', detail: 'Error saving the Vlan.', life: 3000 });
       }
     })
+}
+
+const getSalary = () => {
+  axios.get(import.meta.env.VITE_APP_BACKEND_IP+"/settings/getSalary")
+    .then((res) => {
+      if(res.data.ok) {
+        salary1.value = res.data.firstCourse
+        salary2.value = res.data.secondCourse
+      }else {
+        toast.add({ severity: 'error', summary: 'Error!', detail: 'Error getting the prices.', life: 3000 })
+      }
+    })
+  // salary1.value = 4.0
+  // salary2.value = 6.0
+}
+
+const saveSalary = () => {
+
 }
 
 // ON MOUNTED
@@ -592,6 +638,44 @@ onMounted(() => {
               </div> 
             </div><!-- fi change members -->
 
+            <!-- CHANGE SALARY -->
+            <div class="ml-6 flex justify-content-between align-items-center mt-4">
+              <div class="flex align-items-center">
+                <i class="pi pi-euro" style="font-size: 2rem"></i>
+                <span class="ml-2">Change Salary</span>
+              </div>
+              <Button @click="visibleSalary=true; getSalary();" label="Change" />
+              <Dialog v-model:visible="visibleSalary" modal :closable="false" :style="{ width: '30rem' }" 
+                :breakpoints="{ '1199px': '75vw', '575px': '90vw' } ">
+                <template #header>
+                  <div class="flex align-items-center">
+                    <i class="pi pi-euro" style="font-size: 1.5rem"></i>
+                    <b class="text-2xl ml-2">Change Salary</b>
+                  </div>
+                </template>
+                <!-- CONTENT DIALOG CHANGE TELEGRAM CHAT ID -->
+                <div class="mt-4">
+                  <!-- GROUP NAME & STRATING AMOUNT -->
+                  <span class="col-12 p-float-label">
+                    <InputText v-model="salary1" class="w-full" />
+                    <label class="pl-2" for="chatId">1st Course</label>
+                  </span>
+                  <span class="col-12 p-float-label mt-4">
+                    <InputText v-model="salary2" class="w-full" />
+                    <label class="pl-2" for="chatId">2nd Course</label>
+                  </span>
+                </div>
+                <!-- FOOTER DIALOG CHANGE TELEGRAM CHAT ID -->
+                <template #footer>
+                  <div class="flex justify-content-center w-full gap-3">
+                    <Button label="Cancel" icon="pi pi-times" @click="visibleSalary = false" class="surface-300 border-400 text-black-alpha-90"/>
+                    <Button label="Submit" icon="pi pi-upload" @click="saveSalary()" class="bg-green-500 border-green-600"/>
+                  </div>
+                </template>
+              </Dialog>
+            </div><!-- FI CHANGE TELEGRAM CHAT ID -->
+
+
             <!-- NEW GROUP -->
             <div class="ml-6 flex justify-content-between align-items-center mt-4">
               <div class="flex align-items-center">
@@ -681,6 +765,42 @@ onMounted(() => {
                 </template>
               </Dialog>
             </div><!-- FI CHANGE TELEGRAM CHAT ID -->
+
+
+            <!-- CHANGE TELEGRAM ALERT CHAT ID -->
+            <div class="ml-6 flex justify-content-between align-items-center mt-4">
+              <div class="flex align-items-center">
+                <i class="pi pi-telegram" style="font-size: 2rem"></i>
+                <span class="ml-2">Change Telegram Alert Chat ID</span>
+              </div>
+              <Button @click="visibleChangeTelegramAlert=true; getAlertChatId();" label="Change" />
+              <!-- DIALOG CHANGE TELEGRAM CHAT ID -->
+              <Dialog v-model:visible="visibleChangeTelegramAlert" modal :closable="false" :style="{ width: '30rem' }" 
+                :breakpoints="{ '1199px': '75vw', '575px': '90vw' } ">
+                <!-- HEADER DIALOG CHANGE TELEGRAM CHAT ID -->
+                <template #header>
+                  <div class="flex align-items-center">
+                    <i class="pi pi-telegram" style="font-size: 1.5rem"></i>
+                    <b class="text-2xl ml-2">Change Telegram Alert Chat ID</b>
+                  </div>
+                </template>
+                <!-- CONTENT DIALOG CHANGE TELEGRAM CHAT ID -->
+                <div class="mt-4">
+                  <!-- GROUP NAME & STRATING AMOUNT -->
+                  <span class="col-12 p-float-label">
+                    <InputText v-model="alertChatId" class="w-full" />
+                    <label class="pl-2" for="chatId">Alert Chat ID</label>
+                  </span>
+                </div>
+                <!-- FOOTER DIALOG CHANGE TELEGRAM CHAT ID -->
+                <template #footer>
+                  <div class="flex justify-content-center w-full gap-3">
+                    <Button label="Cancel" icon="pi pi-times" @click="visibleChangeTelegramAlert = false" class="surface-300 border-400 text-black-alpha-90"/>
+                    <Button label="Submit" icon="pi pi-upload" @click="saveAlertChatId()" class="bg-green-500 border-green-600"/>
+                  </div>
+                </template>
+              </Dialog>
+            </div><!-- FI CHANGE TELEGRAM ALERT CHAT ID -->
 
 
 
