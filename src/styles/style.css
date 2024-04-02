@@ -1,0 +1,13 @@
+.h-screen2 {
+  height: 87vh;
+}
+.background {
+  background: rgb(131,191,246);
+  background: radial-gradient(circle, rgba(131,191,246,1) 0%, rgba(24,141,240,1) 35%, rgba(24,141,240,1) 100%);
+}
+
+
+
+
+
+

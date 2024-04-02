@@ -1,0 +1,57 @@
+/* WHITE */
+.color-0 {
+  background-color: #F8F8F8;
+}
+.color-1 {
+  background-color: #EEEEF0;
+}
+.color-1-s {
+  background-color: #EEEEF0;
+}
+.color-1-s:hover {
+  background-color: #CFCFCF;
+}
+
+/* GREEN */
+.color-light-green {
+  /* background-color: #e5f0ee; */
+  background-color: #D2F1EB;
+}
+.color-light-green-2 {
+  background-color: #82DB73;
+}
+
+/* RED */
+.color-light-red {
+  background-color: #F1D2D2;
+}
+.color-light-red-2 {
+  background-color: #F96F6F;
+}
+
+/* BLUE */
+.color-light-blue {
+  background-color: #B2D5EA;
+}
+.color-light-blue-2 {
+  background-color: #D4E4F9;
+}
+.color-light-blue-3 {
+  background-color: #D5E8F4;
+}
+.color-light-blue-4 {
+  background-color: #6EA5C7;
+}
+
+/* YELLOW */
+.color-light-yellow {
+  background-color: #ECEDA2;
+}
+
+/* ORANGE */
+.color-light-orange {
+  background-color: #ED9F77;
+}
+.color-light-orange-1:hover {
+  background-color: #ED9F77;
+}

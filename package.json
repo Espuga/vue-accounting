@@ -1,0 +1,32 @@
+{
+  "name": "vue-accounting",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "admin-lte": "^3.2.0",
+    "axios": "^1.6.2",
+    "core-js": "^3.8.3",
+    "date-fns": "^3.0.6",
+    "echarts": "^5.4.3",
+    "idb": "^8.0.0",
+    "primeflex": "^3.3.1",
+    "primeicons": "^6.0.1",
+    "primevue": "^3.48.1",
+    "timepicker-ui": "^2.6.1",
+    "vue": "^3.3.11",
+    "vue-axios": "^3.5.2",
+    "vue-cookies": "^1.8.3",
+    "vue-echarts": "^6.6.5",
+    "vue-router": "^4.2.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.5.2",
+    "vite": "^5.0.8"
+  }
+}

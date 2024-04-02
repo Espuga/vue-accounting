@@ -1,0 +1,30 @@
+
+/* GREEN */
+.border-green-1 {
+  border: 1px solid rgba(34, 197, 94, 0.6);
+}
+
+/* RED */
+.border-red-1 {
+  border: 1px solid rgba(249, 111, 111, 0.6);
+}
+
+/* BLUE */
+.border-blue-1 {
+  border: 1px solid rgba(80, 176, 234, 0.6)
+}
+
+/* YELLOW */
+.border-yellow-1 {
+  border: 1px solid rgb(236, 197, 22);
+}
+
+/* ORANGE */
+.border-orange-1 {
+  border: 1px solid rgba(239, 130, 74, 1);
+}
+
+/* BLACK */
+.border-black-1 {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
